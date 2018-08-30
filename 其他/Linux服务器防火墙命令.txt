@@ -1,0 +1,4 @@
+1.永久性生效,重启后不会复原 
+开启: chkconfig iptables on 关闭: chkconfig iptables off 
+2.即时生效,重启后复原 
+开启: service iptables start关闭: service iptables stop 

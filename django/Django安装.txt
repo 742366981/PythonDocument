@@ -1,0 +1,29 @@
+1.创建文件夹并切换到该目录
+mkdir hellodjango
+cd hellodjango
+2.创建并激活虚拟环境
+python -m venv venv
+cd venv/Scripts
+activate
+Linux系统下是
+python3 -m venv venv
+source venv/bin/activate
+3.更新包管理工具pip
+python -m pip install -U pip
+4.安装Django
+pip install django
+5.检查Django的版本
+django-admin --version
+6.使用django-admin创建项目，项目命名为oa
+django-admin startproject oa .
+7.启动服务器运行项目
+python manage.py runserver
+8.接下来我们进入项目目录oa并修改配置文件settings.py，Django是一个支持国际化和本地化的框架，因此刚才我们看到的默认首页也是支持国际化的，我们将默认语言修改为中文，时区设置为东八区
+cd oa
+设置语言代码
+LANGUAGE_CODE = 'zh-hans'
+设置时区
+TIME_ZONE = 'Asia/Chongqing'
+9.回到manage.py所在的目录，刷新刚才的页面
+cd ..
+python manage.py runserver

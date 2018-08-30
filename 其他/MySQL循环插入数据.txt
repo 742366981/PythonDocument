@@ -1,0 +1,10 @@
+CREATE PROCEDURE xunhuan()
+begin
+DECLARE i bigint;
+set i=1;
+while i<=686 do
+insert into meinv
+(img) values (concat('img/mm',i,'.jpg'));
+set i=i+1;
+END while;
+END

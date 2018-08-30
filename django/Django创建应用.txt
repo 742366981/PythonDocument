@@ -1,0 +1,32 @@
+1.创建名为demo的应用（注：一个项目可以包含多个应用）
+python manage.py startapp demo
+2.进入应用目录修改视图文件views.py
+from django.http import HttpResponse
+
+
+def index(request):
+    return HttpResponse('<h1>Hello, Django!</h1>')
+3.切换到项目目录，修改该目录下的urls.py文件，对应用中设定的URL进行合并
+from django.contrib import admin
+from django.urls import path
+from demo import views
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', views.home),
+]
+4.在settings中的INSTALLED_APPS位置添加demo
+5.启动项目并访问应用
+cd ..
+python manage.py runserver
+6.修改views.py生成动态内容
+def home(request):
+    html_code = '<html>'
+    html_code += '<head>'
+    html_code += '\t<title></title>'
+    html_code += '\t<meta charset="utf-8">'
+    html_code += '</head>'
+    html_code += '\t<body>'
+    html_code += '\t</body>'
+    html_code += '</html>'
+    return HttpResponse(html_code)

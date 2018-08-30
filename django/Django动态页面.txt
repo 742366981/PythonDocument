@@ -1,0 +1,24 @@
+1.先回到manage.py文件所在的目录创建一个templates文件夹
+cd ..
+mkdir templates
+cd templates
+2.创建模板页index.html
+touch index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+</head>
+<body>
+    <h1>{{name}}</h1>
+</body>
+</html>
+3.回到应用目录，修改views.py文件
+ctx={"name":teacher.name}
+return render(request,"index.html",ctx)
+4.切换到项目目录修改settings.py文件
+'DIRS': [os.path.join(BASE_DIR, 'templates')],
+5.重新运行项目并查看结果
+cd ..
+python manage.py runserver
