@@ -1,0 +1,22 @@
+def grade(request):
+    if request.method == 'GET':
+        num = request.GET.get('page_num', 1)
+        grades = Grade.objects.all()
+        paginator = Paginator(grades, 2)
+        page = paginator.page(num)
+        return render(request, 'grade.html', {'grades': page})
+
+<ul id="PageNum">
+    <li><a href="{% url 'a:grade' %}">首页</a></li>
+        {% if grades.has_previous %}
+            <li><a href="{% url 'a:grade' %}?page_num={{ grades.previous_page_number }}">上一页</a></li>
+        {% endif %}
+        {% for i in grades.paginator.page_range %}
+            <li><a href="{% url 'a:grade' %}?page_num={{ i }}">{{ i }}</a></li>
+        {% endfor %}
+    <li>当前页|{{ grades.paginator.number }}</li>
+        {% if grades.has_next %}
+            <li><a href="{% url 'a:grade' %}?page_num={{ grades.next_page_number }}">下一页</a></li>
+        {% endif %}
+    <li><a href="{% url 'a:grade' %}?page_num={{ grades.paginator.num_pages }}">尾页</a></li>
+</ul>

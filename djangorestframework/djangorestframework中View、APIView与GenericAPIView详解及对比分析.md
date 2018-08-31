@@ -282,8 +282,8 @@ ViewSet视图集类不再实现get()、post()等方法，而是实现动作 acti
 
 ```
 urlpatterns = [
-    url(r'^books/$', BookInfoViewSet.as_view({'get':'list'}),
-    url(r'^books/(?P<pk>\d+)/$', BookInfoViewSet.as_view({'get': 'retrieve'})
+    url(r'^books/$', BookInfoViewSet.as_view({'get':'list'})),
+    url(r'^books/(?P<pk>\d+)/$', BookInfoViewSet.as_view({'get': 'retrieve'})),
 ]
 ```
 

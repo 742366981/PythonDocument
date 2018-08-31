@@ -132,8 +132,8 @@ function test(){
         headers:{
             'Authorization':'JWT '+localStorage.token  //注意：jwt后面有个空格
         },
-        type:"get",
-        url:"http://127.0.0.1:8000/snippets/1/",
+        type:"GET",
+        url:"http://127.0.0.1:8000/video/movies/",
         success:function(data){
            document.write(data.style);
         }
