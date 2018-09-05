@@ -1,4 +1,4 @@
-## 1.Django创建项目及应用
+﻿## 1.Django创建项目及应用
 
 创建项目：`django-admin startproject 项目名称 .`
 
@@ -494,7 +494,7 @@ def login(request):
 
 ```
 def logout(request):
-    if request.POST == 'GET':
+    if request.method == 'GET':
         auth.logout(request)
         return HttpResponseRedirect(reverse('a:login'))
 ```

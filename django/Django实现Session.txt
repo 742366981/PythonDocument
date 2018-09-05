@@ -1,0 +1,215 @@
+Django实现Session
+基本操作
+
+1、设置Sessions值
+          request.session['session_name'] ="admin"
+2、获取Sessions值
+          session_name = request.session["session_name"]
+3、删除Sessions值
+          del request.session["session_name"]
+4、检测是否操作session值
+          if "session_name" in request.session :
+
+
+5、get(key, default=None)
+ 
+fav_color = request.session.get('fav_color', 'red')
+ 
+6、pop(key)
+ 
+fav_color = request.session.pop('fav_color')
+ 
+7、keys()
+ 
+8、items()
+ 
+9、setdefault()
+ 
+10、flush() 删除当前的会话数据并删除会话的Cookie。
+            这用于确保前面的会话数据不可以再次被用户的浏览器访问
+            例如，django.contrib.auth.logout() 函数中就会调用它。
+ 
+ 
+11 用户session的随机字符串
+        request.session.session_key
+  
+        # 将所有Session失效日期小于当前日期的数据删除
+        request.session.clear_expired()
+  
+        # 检查 用户session的随机字符串 在数据库中是否
+        request.session.exists("session_key")
+  
+        # 删除当前用户的所有Session数据
+        request.session.delete("session_key")
+  
+        request.session.set_expiry(value)
+            * 如果value是个整数，session会在些秒数后失效。
+            * 如果value是个datatime或timedelta，session就会在这个时间后失效。
+            * 如果value是0,用户关闭浏览器session就会失效。
+            * 如果value是None,session会依赖全局session失效策略。
+
+
+示例
+
+
+def log_in(request):
+
+    if request.method=="POST":
+        username=request.POST['user']
+        password=request.POST['pwd']
+
+        user=UserInfo.objects.filter(username=username,password=password)
+
+        if user:
+            #设置session内部的字典内容
+            request.session['is_login']='true'
+            request.session['username']=username
+
+            #登录成功就将url重定向到后台的url
+            return redirect('/backend/')
+
+    #登录不成功或第一访问就停留在登录页面
+    return render(request,'login.html')
+
+
+
+
+def backend(request):
+    print(request.session,"------cookie")
+    print(request.COOKIES,'-------session')
+    """
+    这里必须用读取字典的get()方法把is_login的value缺省设置为False，
+    当用户访问backend这个url先尝试获取这个浏览器对应的session中的
+    is_login的值。如果对方登录成功的话，在login里就已经把is_login
+    的值修改为了True,反之这个值就是False的
+    """
+
+    is_login=request.session.get('is_login',False)
+    #如果为真，就说明用户是正常登陆的
+    if is_login:
+        #获取字典的内容并传入页面文件
+        cookie_content=request.COOKIES
+        session_content=request.session
+
+        username=request.session['username']
+
+        return render(request,'backend.html',locals())
+    else:
+        """
+        如果访问的时候没有携带正确的session，
+        就直接被重定向url回login页面
+        """
+        return redirect('/login/')
+
+
+
+def log_out(request):
+    """
+    直接通过request.session['is_login']回去返回的时候，
+    如果is_login对应的value值不存在会导致程序异常。所以
+    需要做异常处理
+    """
+    try:
+        #删除is_login对应的value值
+        del request.session['is_login']
+        
+        # OR---->request.session.flush() # 删除django-session表中的对应一行记录
+
+    except KeyError:
+        pass
+    #点击注销之后，直接重定向回登录页面
+    return redirect('/login/')
+
+
+
+===================================login.html==================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<form action="/login/" method="post">
+    <p>用户名: <input type="text" name="user"></p>
+    <p>密码: <input type="password" name="pwd"></p>
+    <p><input type="submit"></p>
+</form>
+
+
+</body>
+</html>
+
+
+===================================backend.html==================
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<h3>hello {{ username }}</h3>
+<a href="/logout/">注销</a>
+
+</body>
+</html>
+
+session存储的相关配置
+1. 数据库配置（默认）
+
+
+
+Django默认支持Session，并且默认是将Session数据存储在数据库中，即：django_session 表中。
+  
+a. 配置 settings.py
+  
+    SESSION_ENGINE = 'django.contrib.sessions.backends.db'   # 引擎（默认）
+      
+    SESSION_COOKIE_NAME ＝ "sessionid"                       # Session的cookie保存在浏览器上时的key，即：sessionid＝随机字符串（默认）
+    SESSION_COOKIE_PATH ＝ "/"                               # Session的cookie保存的路径（默认）
+    SESSION_COOKIE_DOMAIN = None                             # Session的cookie保存的域名（默认）
+    SESSION_COOKIE_SECURE = False                            # 是否Https传输cookie（默认）
+    SESSION_COOKIE_HTTPONLY = True                           # 是否Session的cookie只支持http传输（默认）
+    SESSION_COOKIE_AGE = 1209600                             # Session的cookie失效日期（2周）（默认）
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = False                  # 是否关闭浏览器使得Session过期（默认）
+    SESSION_SAVE_EVERY_REQUEST = False                       # 是否每次请求都保存Session，默认修改之后才保存（默认）
+
+2. 缓存配置
+
+
+
+a. 配置 settings.py
+  
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'  # 引擎
+    SESSION_CACHE_ALIAS = 'default'                            # 使用的缓存别名（默认内存缓存，也可以是memcache），此处别名依赖缓存的设置
+  
+  
+    SESSION_COOKIE_NAME ＝ "sessionid"                        # Session的cookie保存在浏览器上时的key，即：sessionid＝随机字符串
+    SESSION_COOKIE_PATH ＝ "/"                                # Session的cookie保存的路径
+    SESSION_COOKIE_DOMAIN = None                              # Session的cookie保存的域名
+    SESSION_COOKIE_SECURE = False                             # 是否Https传输cookie
+    SESSION_COOKIE_HTTPONLY = True                            # 是否Session的cookie只支持http传输
+    SESSION_COOKIE_AGE = 1209600                              # Session的cookie失效日期（2周）
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = False                   # 是否关闭浏览器使得Session过期
+    SESSION_SAVE_EVERY_REQUEST = False                        # 是否每次请求都保存Session，默认修改之后才保存
+
+3. 文件配置 
+
+
+
+a. 配置 settings.py
+  
+    SESSION_ENGINE = 'django.contrib.sessions.backends.file'    # 引擎
+    SESSION_FILE_PATH = None                                    # 缓存文件路径，如果为None，则使用tempfile模块获取一个临时地址tempfile.gettempdir()        
+    SESSION_COOKIE_NAME ＝ "sessionid"                          # Session的cookie保存在浏览器上时的key，即：sessionid＝随机字符串
+    SESSION_COOKIE_PATH ＝ "/"                                  # Session的cookie保存的路径
+    SESSION_COOKIE_DOMAIN = None                                # Session的cookie保存的域名
+    SESSION_COOKIE_SECURE = False                               # 是否Https传输cookie
+    SESSION_COOKIE_HTTPONLY = True                              # 是否Session的cookie只支持http传输
+    SESSION_COOKIE_AGE = 1209600                                # Session的cookie失效日期（2周）
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = False                     # 是否关闭浏览器使得Session过期
+    SESSION_SAVE_EVERY_REQUEST = False                          # 是否每次请求都保存Session，默认修改之后才保存

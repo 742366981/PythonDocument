@@ -26,11 +26,13 @@ MIDDLEWARE = [
 其他配置
 
 ```
-# 配置允许跨站访问本站的地址
+# 所有的跨域请求都被允许
 CORS_ORIGIN_ALLOW_ALL = True
-# CORS_ORIGIN_WHITELIST = (
-#     'localhost:8000',  # 请求的域名(此处仅在CORS_ORIGIN_ALLOW_ALL = False时有效)
-# )
+
+# 跨域请求白名单(如果配置了CORS_ORIGIN_ALLOW_ALL = True，可以忽略此项配置)
+CORS_ORIGIN_WHITELIST = (
+     'localhost:8000',
+)
 
 # 定义允许的匹配路径正则表达式
 CORS_URLS_REGEX = '^.*$'
@@ -45,15 +47,22 @@ CORS_ALLOW_METHODS = (
     'OPTIONS',
 )
 
-# 跨域允许证书
+# 后端是否支持对cookie的操作
 CORS_ALLOW_CREDENTIALS = True
 
-# 设置允许的header
+# 设置允许的请求头属性
 CORS_ALLOW_HEADERS = (
-    'Klicen-Agent',
-    'Content-Type',
-    'X-Requested-With',
-    'xyt-agent',
+    'XMLHttpRequest',
+    'X_FILENAME',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'Pragma',
 )
 ```
 
