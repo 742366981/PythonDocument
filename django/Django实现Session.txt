@@ -1,36 +1,41 @@
 Django实现Session
 基本操作
+Session操作
+通过HttpRequest对象的session属性进行会话的读写操作。
 
-1、设置Sessions值
-          request.session['session_name'] ="admin"
-2、获取Sessions值
-          session_name = request.session["session_name"]
-3、删除Sessions值
-          del request.session["session_name"]
-4、检测是否操作session值
-          if "session_name" in request.session :
+1 以键值对的格式写session。
 
+request.session['键']=值
 
-5、get(key, default=None)
+2 根据键读取值。
+
+request.session.get('键',默认值)
+
+3 清除所有session，在存储中删除值部分。
+
+request.session.clear()
+1
+4 清除session数据，在存储中删除session的整条数据。
+
+request.session.flush()
+
+5 删除session中的指定键及值，在存储中只删除某个键及对应的值。
+
+del request.session['键']
+
+6 设置session的有效期
+
+request.session.set_expiry(value)
+
+7 清除所有过期session
+
+python manage.py clearsessions
+
+如果value是一个整数，session将在value秒没有活动后过期。 
+如果value为0，那么用户session的Cookie将在用户的浏览器关闭时过期。 
+如果value为None，那么session有效期将采用系统默认值， 默认为两周，可以通过在settings.py中设置SESSION_COOKIE_AGE来设置全局默认值。
  
-fav_color = request.session.get('fav_color', 'red')
- 
-6、pop(key)
- 
-fav_color = request.session.pop('fav_color')
- 
-7、keys()
- 
-8、items()
- 
-9、setdefault()
- 
-10、flush() 删除当前的会话数据并删除会话的Cookie。
-            这用于确保前面的会话数据不可以再次被用户的浏览器访问
-            例如，django.contrib.auth.logout() 函数中就会调用它。
- 
- 
-11 用户session的随机字符串
+8 用户session的随机字符串
         request.session.session_key
   
         # 将所有Session失效日期小于当前日期的数据删除
