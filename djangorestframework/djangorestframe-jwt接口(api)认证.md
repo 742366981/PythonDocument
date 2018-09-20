@@ -34,43 +34,11 @@ INSTALLED_APPS = [
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',  # 通过jwt验证
+        'rest_framework.authentication.SessionAuthentication',  # 通过session验证
+        'rest_framework.authentication.BasicAuthentication',  # 通过账号和密码验证
     ),
     }
-### 安装django-cors-headers
-
-解决api跨域请求有好几种方法，比如（jsonp,在apache或nginx中设置，在请求头里设置），我们这里使用这个包来方便的跨域
-
-1.在终端输入如下命令：
-`pip install django-cors-headers`
-2.配置settings.py文件
-
-```
-INSTALLED_APPS = [
-    ...
-    'corsheaders'，
-    ...
- ] 
-
-MIDDLEWARE_CLASSES = (
-    ...
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware', # 注意顺序
-    ...
-)
-
-CORS_ORIGIN_WHITELIST = (
-    #'*'
-    '127.0.0.1:8080',# 请求的域名
-    'localhost:8080',
-    'localhost',
-)
-```
-
-
-
 ### 配置
 
 ##### 后端配置
@@ -87,7 +55,7 @@ JWT_AUTH = {
 
 当然还有很多其他相关设置，可以自己翻阅文档
 
-2.修改使用jwt验证的URL
+2.配置获取token的URL
 
 ```
 from rest_framework_jwt.views import obtain_jwt_token
@@ -95,9 +63,21 @@ from rest_framework_jwt.views import obtain_jwt_token
 url(r'^api-token-auth/', obtain_jwt_token),
 ```
 
-3.配置页面访问权限
+获取方法：发POST请求到配好的URL,加上参数?username=用户名&password=密码
 
-按需设置访问权限(上面已设置所有接口都需要被验证)
+3.生成token
+
+```
+from rest_framework_jwt.settings import api_settings
+
+
+def create_token(user):
+    jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+    jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+    payload = jwt_payload_handler(user)
+    token = jwt_encode_handler(payload)
+    return token
+```
 
 加上token之后基本上是不经过认证是不能查看或修改数据的
 

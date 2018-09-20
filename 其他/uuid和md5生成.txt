@@ -1,0 +1,12 @@
+# 生成uuid
+import uuid
+
+my_uuid = uuid.uuid4()
+print(my_uuid)
+
+# 生成md5
+import hashlib   
+
+my_md5 = hashlib.md5()   
+my_md5.update('1'.encode('utf-8'))   
+print(my_md5.hexdigest())

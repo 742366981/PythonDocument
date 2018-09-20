@@ -1,0 +1,179 @@
+1.配置文件
+
+vim /etc/mongodb.conf
+
+# nd how to store data
+storage:
+  dbPath: /usr/local/mongodb-linux-x86_64-rhel70-3.6.5/data   # 数据库目录 需要自己建
+  journal:
+    enabled: true
+#  engine:
+#  mmapv1:
+#  wiredTiger:
+
+# where to write logging data.
+systemLog:
+  destination: file
+  logAppend: true
+  path: /usr/local/mongodb-linux-x86_64-rhel70-3.6.5/mongodb.log
+
+# how the process runs
+processManagement:
+  fork: true  # fork and run in background
+ # pidFilePath: /var/run/mongodb/mongod.pid  # location of pidfile
+ # timeZoneInfo: /usr/share/zoneinfo
+
+# network interfaces
+net:
+  port: 27017
+  bindIpAll: true                                     # 所有ip都可以 方便远程访问
+ # bindIp: 127.0.0.1 #to bind to all IPv4 and IPv6 addresses or, alternatively, use the net.bindIpAll setting.
+
+security:
+  authorization: disabled  #disabled enabled  启用密码 默认为disabled 因为没有root账号
+
+2.启动mongodb服务
+
+mongod -f /etc/mongodb.conf
+
+   常用的启动参数：
+
+   --dbpath：指定存储数据的文件夹
+
+   --logpath：指定日志存储文件
+
+   --logappend：日志以增加方式产生
+
+   --port指定端口，如果不写的话，默认是27017
+
+   --fork代表后台运行
+
+3.停止mongodb服务
+
+mongod --shutdown -f /etc/mongodb.conf
+
+4.mongodb测试
+
+启动mongod数据库服务
+
+mongod -f /etc/mongodb.conf --这里的conf文件是相对路径 如果不在bin目录下 请输入绝对路径
+
+进入mongodb数据库
+
+mongo
+
+如打印信息说明成功 pidof mongod 可以验证 或者top看
+
+插入1个数据
+
+use lalala
+
+db.test.insert({title:'哈哈',Tags:['anime','game']});
+
+show collections
+
+db.test.find()
+
+show dbs -- 只有有东西才显示 默认test没东西所以你看不到
+
+5.建立root账号
+
+mongo 默认谁都可以访问修改 但只有本地 所以我们要配置下
+
+use 哪个就是用哪个数据库 没有就新建 mongo默认会生成一些数据库 如 admin ,config
+
+show dbs -- 看看有哪些数据库
+
+use admin
+
+db.createUser({user:"root",pwd:"123456",roles:["root","userAdminAnyDatabase"]}) -- 建立root并且分配角色
+
+db.system.users.find() -- 查看系统的用户
+
+如果有了就exit 出去 在mongodb.conf里 authorization为enabled
+
+mongod --shutdown -f /etc/mongodb.conf --关闭服务
+
+mongod -f /etc/mongodb.conf --开启服务
+
+show dbs - 报错 不可以以匿名方式显示
+
+use admin
+
+db.auth("root","123456") -- 注意引号 他是个字符串
+
+返回1 说明身份通过你的身份就是root
+
+use nana -- 以root的身份建立个nana数据库
+
+db.createUser({user:'admin',pwd:'123456', roles: [ "readWrite", "dbAdmin" ]}) -- 为nana创建个管理员用户admin
+
+show users -- 看用户
+
+db.logout() -- 登出root 或者exit
+
+db.websize.insert({title:'哈哈',Tags:['anime','game']}); -- 没权限
+
+db.auth("admin","123456") -- 用nana的admin
+
+db.websize.insert({title:'dorodoroLab',Tags:['dorodro','lab']}); -- 这次有权限
+
+db.websize.find() --插入成功
+
+这里要注意的是 createUser 根据 use在哪个数据库 show users信息就生成在哪 不然通过db.auth可能找不到 下面命令也一样
+
+db.grantRolesToUser( "admin" , [ "readWrite", "dbAdmin","useAdmin" ]) -- 用户新授权 也可以用db.updateUser
+
+db.dropUser('admin') --删除用户
+
+root用户可以使用admin全局管理用户 通过db.system.users.find() db.system.users.remove() 等
+
+如果懒的记请用 db.help() 去看
+
+6.mongodb开机启动
+
+设置mongodb.service启动服务
+
+cd /lib/systemd/system
+
+vim mongodb.service
+
+[Unit]  
+Description=mongodb  
+After=network.target remote-fs.target nss-lookup.target  
+  
+[Service]  
+Type=forking  
+RuntimeDirectory=mongodb
+RuntimeDirectoryMode=0751
+PIDFile=/var/run/mongodb/mongod.pid
+ExecStart=/usr/local/mongodb/bin/mongod --config /usr/local/mongodb/bin/mongodb.conf  
+ExecStop=/usr/local/mongodb/bin/mongod --shutdown --config /usr/local/mongodb/bin/mongodb.conf  
+PrivateTmp=false  
+  
+[Install]  
+WantedBy=multi-user.target
+
+设置mongodb.service权限
+
+chmod 754 mongodb.service
+
+systemctl daemon-reload
+
+系统mongodb.service操作命令
+
+启动服务
+
+systemctl start mongodb.service
+
+关闭服务
+
+systemctl stop mongodb.service
+
+开机启动
+
+systemctl enable mongodb.service
+
+mongodb.service启动测试
+
+mongo 127.0.0.1

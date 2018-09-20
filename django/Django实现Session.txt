@@ -14,7 +14,7 @@ request.session.get('键',默认值)
 3 清除所有session，在存储中删除值部分。
 
 request.session.clear()
-1
+
 4 清除session数据，在存储中删除session的整条数据。
 
 request.session.flush()
