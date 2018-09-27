@@ -14,12 +14,11 @@ INSTALLED_APPS = [
 ]
 ```
 
-添加中间件
+添加中间件(必须放在django.middleware.common.CommonMiddleware之前)
 
 ```
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
 ]
 ```
 
