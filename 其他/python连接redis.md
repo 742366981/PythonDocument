@@ -61,7 +61,7 @@ Sort Set 操作
 
 redis中的String在在内存中按照一个name对应一个value来存储。如图：
 
-![](..\res\redis-string.png)
+![](../res/redis-string.png)
 
 ```python
 set(name, value, ex=None, px=None, nx=False, xx=False)
