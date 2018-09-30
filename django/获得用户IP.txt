@@ -1,0 +1,13 @@
+如果用户是正常情况下:
+
+
+request.META.get('REMOTE_ADDR')
+
+有些网站服务器会使用ngix等代理http，或者是该网站做了负载均衡，导致使用remote_addr抓取到的是1270.0.1，这时使用HTTP_X_FORWARDED_FOR才能获得用户的真实IP。
+
+推荐使用以下代码:
+
+if request.META.has_key('HTTP_X_FORWARDED_FOR'):
+    ip =  request.META.get('HTTP_X_FORWARDED_FOR')
+else:    
+    ip = request.META.get('REMOTE_ADDR')
