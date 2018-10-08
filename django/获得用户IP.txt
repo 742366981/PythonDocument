@@ -1,11 +1,11 @@
-Èç¹ûÓÃ»§ÊÇÕý³£Çé¿öÏÂ:
+å¦‚æžœç”¨æˆ·æ˜¯æ­£å¸¸æƒ…å†µä¸‹:
 
 
 request.META.get('REMOTE_ADDR')
 
-ÓÐÐ©ÍøÕ¾·þÎñÆ÷»áÊ¹ÓÃngixµÈ´úÀíhttp£¬»òÕßÊÇ¸ÃÍøÕ¾×öÁË¸ºÔØ¾ùºâ£¬µ¼ÖÂÊ¹ÓÃremote_addr×¥È¡µ½µÄÊÇ1270.0.1£¬ÕâÊ±Ê¹ÓÃHTTP_X_FORWARDED_FOR²ÅÄÜ»ñµÃÓÃ»§µÄÕæÊµIP¡£
+æœ‰äº›ç½‘ç«™æœåŠ¡å™¨ä¼šä½¿ç”¨ngixç­‰ä»£ç†httpï¼Œæˆ–è€…æ˜¯è¯¥ç½‘ç«™åšäº†è´Ÿè½½å‡è¡¡ï¼Œå¯¼è‡´ä½¿ç”¨remote_addræŠ“å–åˆ°çš„æ˜¯127.0.0.1ï¼Œè¿™æ—¶ä½¿ç”¨HTTP_X_FORWARDED_FORæ‰èƒ½èŽ·å¾—ç”¨æˆ·çš„çœŸå®žIPã€‚
 
-ÍÆ¼öÊ¹ÓÃÒÔÏÂ´úÂë:
+æŽ¨èä½¿ç”¨ä»¥ä¸‹ä»£ç :
 
 if request.META.has_key('HTTP_X_FORWARDED_FOR'):
     ip =  request.META.get('HTTP_X_FORWARDED_FOR')
