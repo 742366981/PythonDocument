@@ -1,0 +1,84 @@
+yum -y install docker-io	下载docker
+systemctl start docker		开启docker
+docker images			查看docker的镜像
+docker pull mysql:5.7		下载官方的MySQL5.7的镜像
+docker rmi (镜像的ID)		删除不需要的镜像，需要接上镜像的ID
+如果安不起镜像操作：
+cd /etc/docker/
+vim daemon.json 
+
+{
+	"registry-mirrors":[
+	"http://hub-mirror.c.163.com"
+	"https://registry.docker-cn.com"
+	]
+}
+systemtcl restart docker 然后重启docker
+
+
+
+ps -ef | grep mysqld	查看MySQL是否已经启动
+
+docker run -d -p 3306:3306 --name mysql57 -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7	-p表示发布 3306表示端口 --name表示起一个容器名字 表示镜像的名字
+
+docker ps 查看进程情况
+
+然后连接MySQL服务器
+
+docker stop mysql57	 停止docker容器
+
+docker run -d -p 6379:6379  --name redis-master redis redis-server --appendonly yes --requirepass 123456	配置redis的docker镜像
+
+
+docker exec -i -t redis-master /bin/bash	进入redis容器里面 	redis-master代表容器名字
+
+
+redis-cli
+auth +密码
+quit
+exit	
+
+
+docker run -d -p 6380:6379  --name redis-slave-1 --link redis-master:net1 redis redis-server --slaveof net1 6379 --masterauth 123456
+
+docker run -d -p 6381:6379  --name redis-slave-2 --link redis-master:net1 redis redis-server --slaveof net1 6379 --masterauth 123456
+
+--link redis-master:net1给奴隶起一个网络别名net1
+--slaveof表示给谁当奴隶
+--masterauth 123456连接master的网络以及密码
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
