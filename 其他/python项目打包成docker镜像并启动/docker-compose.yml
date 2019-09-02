@@ -1,0 +1,7 @@
+py:
+  image: mc:1
+  ports:
+    - "8125:8118"
+  restart: always
+
+#创建容器并运行: docker-compose up -d py
