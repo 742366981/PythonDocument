@@ -1,0 +1,17 @@
+version: '2.1'
+services:
+    platform-information-test:
+        build:
+            context: ./
+            dockerfile: Dockerfile
+        image: python-platform-information-test
+        container_name: platform-information-test
+        working_dir: /platform-information
+        restart: always
+#        ports:
+#            - '8189:8189'
+        command: python3 -u main.py --test
+        volumes:
+            - ../platform-information:/platform-information
+        environment:
+            - TZ=Asia/Chongqing
