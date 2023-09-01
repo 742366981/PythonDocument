@@ -1,3 +1,5 @@
+设置yum国内源：
+yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
 安装git：
     yum -y install git
 生成密钥：
@@ -9,8 +11,6 @@
     vim /etc/docker/daemon.json
     {
         "registry-mirrors": [
-            "http://hub-mirror.c.163.com",
-            "https://docker.mirrors.ustc.edu.cn",
             "https://registry.docker-cn.com"
         ]
     }
