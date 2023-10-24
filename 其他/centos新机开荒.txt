@@ -26,4 +26,4 @@ yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/d
     wget https://github.com/bcicen/ctop/releases/download/v0.7.5/ctop-0.7.5-linux-amd64 -O /usr/local/bin/ctop
     chmod +x /usr/local/bin/ctop
 安装nethogs：
-    yum install - y nethogs
+    yum install -y nethogs
