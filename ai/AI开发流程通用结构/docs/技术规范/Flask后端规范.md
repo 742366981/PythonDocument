@@ -806,11 +806,11 @@ def permission_required(*permission_codes):
             if not user_id:
                 return api_error(401, '请先登录')
 
-            user = User.query.get(int(user_id))
+            user = db.session.get(User, int(user_id))
             if not user:
                 return api_error(401, '用户不存在')
 
-            role = Role.query.get(user.role_id)
+            role = db.session.get(Role, user.role_id)
             if not role:
                 return api_error(403, '用户角色不存在')
 
@@ -945,14 +945,7 @@ role_id = db.Column(db.Integer, index=True)
 
 ### 12.1 Redis客户端
 
-**必须使用连接池**，禁止直接创建 Redis 连接。
-
-使用 `db/redis/helpers.py` 中的 `admin_redis`（基于连接池实现）：
-
-**连接池实现要点：**
-- 使用 `redis.ConnectionPool` 创建连接池
-- 所有操作从连接池获取连接
-- 避免频繁创建/销毁连接
+使用 `db/redis/helpers.py` 中的 `admin_redis`：
 
 | 方法 | 说明 |
 |:-----|:-----|
@@ -1001,9 +994,9 @@ def my_task():
 
 > ⚠️ **强制要求：先写文档，后写代码**
 >
-> **每个接口必须先编写 `@swag_from` 装饰器，再编写视图函数实现。**
+> **每个接口必须先在视图函数docstring中编写文档，再编写视图函数实现。**
 >
-> **必须包含完整示例**：summary、description、parameters、responses、example。
+> **必须包含完整字段**：summary、description、parameters（含各参数example）、responses（含examples示例）。
 >
 > **检查模板文件**：
 > - 检查 `docs/API文档/swagger_template.md` 是否存在
@@ -1027,7 +1020,7 @@ def register_swagger(app, protect=True):
     if ENV_TYPE == 'prod':
         return  # 生产环境不启用Swagger
 
-    from flasgger import Swagger
+    from flasgger import Swagger, NO_SANITIZER
 
     swagger_config = {
         "headers": [],
@@ -1040,7 +1033,7 @@ def register_swagger(app, protect=True):
         "swagger_ui_css": "//unpkg.com/swagger-ui-dist@3.52.5/swagger-ui.css",
     }
 
-    Swagger(app, config=swagger_config, template={
+    Swagger(app, config=swagger_config, sanitizer=NO_SANITIZER, template={
         "swagger": "2.0",
         "info": {"title": "API文档", "version": "1.0.0"},
         "host": f"{get_internal_ip()}:{app_conf.get('port')}",
@@ -1067,64 +1060,90 @@ def register_swagger(app, protect=True):
                     return Response('Login Required', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
 ```
 
-### 13.2 接口文档装饰器
+### 13.2 接口文档格式
+
+> ⚠️ **重要：docstring格式要求**
+>
+> 1. **标题与`---`之间不能有空行**，否则Flasgger解析会出错
+> 2. 使用 `NO_SANITIZER` 防止换行符转义为 `<br/>`
 
 ```python
 # apps/auth/views.py
 
-from flasgger import swag_from
-
 
 @auth_bp.route('/login', methods=['POST'])
-@swag_from({
-    'tags': ['系统管理/认证管理'],
-    'summary': '用户登录',
-    'description': '使用用户名和密码进行登录，返回JWT token。',
-    'parameters': [
-        {
-            'name': 'body',
-            'in': 'body',
-            'required': True,
-            'schema': {
-                'type': 'object',
-                'example': {'username': 'admin', 'password': '0192023a7bbd73250516f069df18b500'},
-                'properties': {
-                    'username': {'type': 'string', 'example': 'admin', 'description': '用户名'},
-                    'password': {'type': 'string', 'example': '0192023a7bbd73250516f069df18b500', 'description': '密码(MD5)'}
-                },
-                'required': ['username', 'password']
-            }
-        }
-    ],
-    'responses': {
-        200: {
-            'description': '登录成功',
-            'schema': {
-                'type': 'object',
-                'properties': {
-                    'code': {'type': 'integer', 'example': 0},
-                    'msg': {'type': 'string', 'example': 'success'},
-                    'data': {
-                        'type': 'object',
-                        'properties': {
-                            'token': {'type': 'string'},
-                            'user': {'type': 'object'}
-                        }
-                    }
-                }
-            }
-        }
-    }
-})
 def login():
-    # ...
+    """用户登录
+---
+tags:
+  - 系统管理/认证管理
+summary: 用户登录
+description: 使用用户名或手机号和密码登录，返回Token。
+parameters:
+  - in: body
+    name: body
+    required: true
+    schema:
+      type: object
+      properties:
+        username:
+          type: string
+          description: 用户名（手机号也可以）
+          example: admin
+        password:
+          type: string
+          description: 密码(MD5)
+          example: e10adc3949ba59abbe56e057f20f883e
+      required:
+        - username
+        - password
+      example:
+        username: admin
+        password: e10adc3949ba59abbe56e057f20f883e
+responses:
+  200:
+    description: 登录成功
+    examples:
+      application/json:
+        code: 0
+        data:
+          token: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+          user_id: 1
+          username: "admin"
+        msg: "success"
+    schema:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 0
+        msg:
+          type: string
+          example: "success"
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              description: 访问令牌
+              example: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+            user_id:
+              type: integer
+              description: 用户ID
+              example: 1
+            username:
+              type: string
+              description: 用户名
+              example: "admin"
+"""
+    # 视图函数实现
 ```
 
 ### 13.3 文档编写要求（强制）
 
-> ⚠️ **每个接口必须先编写 `@swag_from` 装饰器，再编写视图函数实现。**
+> ⚠️ **每个接口必须先在docstring中编写文档，再编写视图函数实现。**
 
-接口文档通过 `@swag_from` 装饰器定义，必须包含以下字段：
+接口文档通过视图函数的docstring定义，必须包含以下字段：
 
 | 字段 | 必须 | 说明 |
 |:-----|:-----|:-----|
@@ -1133,19 +1152,59 @@ def login():
 | parameters | ✅ | 请求参数（位置、名称、类型、必填、说明） |
 | responses | ✅ | 响应格式（状态码、描述、示例） |
 
-**示例结构：**
+**正确格式：**
 
 ```python
 @auth_bp.route('/login', methods=['POST'])
-@swag_from({
-    'tags': ['系统管理/认证管理'],
-    'summary': '用户登录',
-    'description': '使用用户名和密码进行登录，返回JWT token。',
-    'parameters': [...],
-    'responses': {...}
-})
 def login():
+    """用户登录
+---
+tags:
+  - 系统管理/认证管理
+summary: 用户登录
+description: 使用用户名或手机号和密码登录，返回Token。
+parameters:
+  - in: body
+    name: body
+    required: true
+    schema:
+      type: object
+      properties:
+        username:
+          type: string
+          description: 用户名
+          example: admin
+      required:
+        - username
+responses:
+  200:
+    description: 登录成功
+    examples:
+      application/json:
+        code: 0
+        msg: "success"
+    schema:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 0
+"""
     # 视图函数实现
+```
+
+**错误格式（会导致description显示<br/>）：**
+
+```python
+# ❌ 标题和---之间有空行
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    """用户登录
+
+    ---
+    tags:
+    ...
+"""
 ```
 
 **文档导出流程**：
