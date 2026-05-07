@@ -996,7 +996,12 @@ def my_task():
 >
 > **每个接口必须先编写 `@swag_from` 装饰器，再编写视图函数实现。**
 >
-> 文档格式见 `swagger_template.md`，必须包含：summary、description、parameters、responses。
+> **必须包含完整示例**：summary、description、parameters、responses、example。
+>
+> **检查模板文件**：
+> - 检查 `docs/API文档/swagger_template.md` 是否存在
+> - 若不存在 → **必须先询问用户**是否需要创建模板文件
+> - 若存在 → 参考模板格式编写
 
 **仅非生产环境可用**：仅在开发/测试环境启用，生产环境自动禁用，不暴露接口信息。
 
