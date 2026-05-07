@@ -1,16 +1,79 @@
 # Git 规范
 
-## 1. 核心规则
+## 1. 忽略文件检测（强制）
+
+**每次开始任务前，必须检查项目是否有 `.gitignore` 文件：**
+
+1. **检查 `.gitignore` 是否存在**
+   - 若**存在** → 检查内容是否完整，确保敏感文件和临时文件被忽略
+   - 若**不存在** → **必须创建** `.gitignore`，参考下方通用模板
+
+2. **禁止随意 `git add .`**
+   - ❌ 禁止直接 `git add .` 或 `git add *`
+   - ✅ 必须明确指定要提交的文件或目录
+   - 若不确定某个文件是否应该提交，先检查 `.gitignore` 规则
+
+**通用 `.gitignore` 模板：**
+
+```
+# 临时文件
+temp/
+*.tmp
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Node
+node_modules/
+package-lock.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 环境配置（包含敏感信息）
+.env
+.env.*
+config.ini
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 数据库
+*.db
+*.sqlite
+
+# 其他
+*.bak
+*.backup
+```
+
+---
+
+## 2. 核心规则
 
 本项目采用"每次操作后自动 commit"的方式，确保会话压缩后可快速恢复记忆。
 
 **任务执行流程（按顺序）：**
 
 1. **执行任务**
-2. **git add . && git commit** - 提交变更
+2. **确认文件** - 检查 `.gitignore`，确认要提交的文件
+3. **git add \<文件\>** - 只添加需要提交的文件
+4. **git commit** - 提交变更
 
 > **重要**：
 > - 所有文件修改都需要提交（代码、文档、配置、模板等）
+> - 必须先确认 `.gitignore` 存在且完整
 
 ---
 
