@@ -945,7 +945,14 @@ role_id = db.Column(db.Integer, index=True)
 
 ### 12.1 Redis客户端
 
-使用 `db/redis/helpers.py` 中的 `admin_redis`：
+**必须使用连接池**，禁止直接创建 Redis 连接。
+
+使用 `db/redis/helpers.py` 中的 `admin_redis`（基于连接池实现）：
+
+**连接池实现要点：**
+- 使用 `redis.ConnectionPool` 创建连接池
+- 所有操作从连接池获取连接
+- 避免频繁创建/销毁连接
 
 | 方法 | 说明 |
 |:-----|:-----|
