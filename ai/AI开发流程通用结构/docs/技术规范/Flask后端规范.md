@@ -1495,7 +1495,7 @@ RUN pip3 install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple
 ### 20.2 docker-compose.yml
 
 ```yaml
-version: '3'
+version: '2.1'
 services:
   {项目名}:
     build:
