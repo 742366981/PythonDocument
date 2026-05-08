@@ -435,36 +435,35 @@ def init_request_log(app):
 
 ```python
 # utils/loggings.py
+# -*- coding: utf-8 -*-
+"""
+日志封装
+"""
 
 import os
 import logging
-from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
+from concurrent_log_handler import ConcurrentTimedRotatingFileHandler, ConcurrentRotatingFileHandler
 import colorlog
 
-from common.constants import LOGGING_BASE_DIR, IS_PRODUCT, IS_MULTIPLE
+from common.constants import LOGGING_BASE_DIR
 
-if IS_MULTIPLE:
-    from concurrent_log_handler import ConcurrentRotatingFileHandler as RotatingFileHandler, \
-        ConcurrentTimedRotatingFileHandler as TimedRotatingFileHandler
+FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+LOG_COLORS_CONFIG = {'DEBUG': 'cyan', 'INFO': 'green', 'WARNING': 'yellow', 'ERROR': 'red', 'CRITICAL': 'bold_red'}
 
 
 class Logger:
+    """日志封装类"""
+
     CRITICAL = 50
     ERROR = 40
     WARNING = 30
     INFO = 20
     DEBUG = 10
-    FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    LOG_COLORS_CONFIG = {'DEBUG': 'cyan', 'INFO': 'green', 'WARNING': 'yellow', 'ERROR': 'red', 'CRITICAL': 'bold_red'}
 
-    def __init__(self, name, folder, type_=1, backup_count=9, vol=1, is_switch=True, is_save_file=True,
-                 is_print_console=True):
+    def __init__(self, name, folder, type_=1, backup_count=9, vol=1, is_switch=True, is_save_file=False, is_print_console=True):
         self.name = name
-        if IS_PRODUCT:
-            self.log_folder = f'{LOGGING_BASE_DIR}/{folder}'
-        else:
-            self.log_folder = f'{LOGGING_BASE_DIR}/{folder}/test'
-        self.formatter = logging.Formatter(self.FORMAT)
+        self.log_folder = os.path.join(LOGGING_BASE_DIR, folder)
+        self.formatter = logging.Formatter(FORMAT)
         self.type_ = type_
         self.backup_count = backup_count
         self.vol = vol
@@ -480,22 +479,23 @@ class Logger:
             logger.setLevel(eval(f'self.{level.upper()}'))
             if self.is_save_file:
                 if self.type_ == 1:
-                    file_handler = TimedRotatingFileHandler(
-                        f'{self.log_folder}/{self.name}_{level}.log',
+                    file_handler = ConcurrentTimedRotatingFileHandler(
+                        os.path.join(self.log_folder, f'{self.name}_{level}.log'),
                         encoding='utf-8', when='D', interval=self.vol,
                         backupCount=self.backup_count)
                 elif self.type_ == 2:
-                    file_handler = RotatingFileHandler(
-                        f'{self.log_folder}/{self.name}_{level}.log',
+                    file_handler = ConcurrentRotatingFileHandler(
+                        os.path.join(self.log_folder, f'{self.name}_{level}.log'),
                         maxBytes=self.vol, backupCount=self.backup_count, encoding='utf-8')
                 else:
                     file_handler = None
-                file_handler.setLevel(eval(f'self.{level.upper()}'))
-                file_handler.setFormatter(self.formatter)
-                logger.addHandler(file_handler)
+                if file_handler:
+                    file_handler.setLevel(eval(f'self.{level.upper()}'))
+                    file_handler.setFormatter(self.formatter)
+                    logger.addHandler(file_handler)
             if self.is_print_console:
                 console_formatter = colorlog.ColoredFormatter(
-                    f'%(log_color)s{self.FORMAT}', log_colors=self.LOG_COLORS_CONFIG)
+                    f'%(log_color)s{FORMAT}', log_colors=LOG_COLORS_CONFIG)
                 console_handler = logging.StreamHandler()
                 console_handler.setLevel(eval(f'self.{level.upper()}'))
                 console_handler.setFormatter(console_formatter)
@@ -524,10 +524,10 @@ class Logger:
 
 
 # 预定义日志实例
-admin_request_log = Logger('admin_request', 'logs', is_switch=True, is_save_file=False, is_print_console=True)
-admin_response_log = Logger('admin_response', 'logs', is_switch=True, is_save_file=False, is_print_console=True)
-http_requests_log = Logger('http_requests', 'logs', is_switch=True, is_save_file=False, is_print_console=True)
-general_log = Logger('general', 'logs', is_switch=True, is_save_file=False, is_print_console=True)
+admin_request_log = Logger('admin_request', 'logs', is_switch=True, is_save_file=True, is_print_console=True)
+admin_response_log = Logger('admin_response', 'logs', is_switch=True, is_save_file=True, is_print_console=True)
+http_requests_log = Logger('http_requests', 'logs', is_switch=True, is_save_file=True, is_print_console=True)
+general_log = Logger('general', 'logs', is_switch=True, is_save_file=True, is_print_console=True)
 ```
 
 ---
