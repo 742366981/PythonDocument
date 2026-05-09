@@ -131,6 +131,7 @@ def api_page(records, page_no, page_size, total_count):
 | 详情接口 | /detail | /user/detail |
 | 创建接口 | /create | POST /user/create |
 | 更新接口 | /update | POST /user/update |
+| 状态修改 | /update-status | POST /user/update-status |
 | 删除接口 | /delete | POST /user/delete |
 | 批量删除 | /batch-delete | POST /user/batch-delete |
 | 导入接口 | /import | POST /user/import |
