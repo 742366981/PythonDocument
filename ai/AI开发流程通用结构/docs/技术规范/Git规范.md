@@ -77,7 +77,7 @@ Thumbs.db
 
 ---
 
-## 2. Commit Message 格式
+## 3. Commit Message 格式
 
 ```
 <类型>: <简短描述>
@@ -99,7 +99,7 @@ Thumbs.db
 
 ---
 
-## 3. 会话压缩/中断后恢复流程
+## 4. 会话压缩/中断后恢复流程
 
 **第一步：查看最近操作**
 
@@ -119,7 +119,7 @@ git show <commit-hash> --stat
 
 ---
 
-## 4. 判断标准：什么时候需要 commit
+## 5. 判断标准：什么时候需要 commit
 
 | 场景 | 需要commit | 示例 |
 |:-----|:----------|:-----|
@@ -137,7 +137,7 @@ git show <commit-hash> --stat
 
 ---
 
-## 5. 良好实践
+## 6. 良好实践
 
 **✅ 好的 commit message**
 
