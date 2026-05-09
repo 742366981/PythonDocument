@@ -115,9 +115,10 @@
 
 | 文件 | 内容要求 | 参考示例 |
 |:-----|:---------|:---------|
-| swagger_template.md | Flasgger docstring 编写模板 | `docs/API文档/swagger_template.md` |
-| swagger_spec.json | Swagger JSON 导出 | `docs/API文档/swagger_spec.json` |
-| API文档.md | 完整接口文档（Markdown） | `docs/API文档/API文档.md` |
+| swagger_template.md | Flasgger docstring 编写模板（**必须**） | `docs/API文档/swagger_template.md` |
+| API文档.md | 完整接口文档（Markdown格式，**必须**） | `docs/API文档/API文档.md` |
+
+> 注：swagger_spec.json 由 `tools/export_docs.py` 从代码 docstring 导出，无需预置
 
 **内容深度：**
 - 完整参数说明（含 type、description、example）
@@ -125,7 +126,9 @@
 - 分页参数说明
 - 导入导出文件格式说明
 
-### 技术规范清单
+---
+
+## 五、技术规范清单
 
 | 规范 | 说明 |
 |:-----|:-----|

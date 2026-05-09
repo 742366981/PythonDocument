@@ -49,9 +49,10 @@ docs/
 
 | 文件 | 内容要求 |
 |:-----|:---------|
-| swagger_template.md | Flasgger docstring 编写模板 |
-| swagger_spec.json | Swagger JSON 导出 |
-| API文档.md | 完整接口文档（Markdown） |
+| swagger_template.md | Flasgger docstring 编写模板（**必须**） |
+| API文档.md | 完整接口文档（Markdown格式，**必须**） |
+
+> 注：swagger_spec.json 由 `tools/export_docs.py` 从代码 docstring 导出，无需预置
 
 **内容深度要求：**
 - 每个接口必须有完整参数说明（含 type、description、example）
