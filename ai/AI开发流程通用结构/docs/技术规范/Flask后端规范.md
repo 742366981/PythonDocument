@@ -266,8 +266,29 @@ app_conf = config
 
 ### 4.2 配置文件格式
 
+> ⚠️ **配置文件与环境变量关联（强制）**
+>
+> 配置文件的加载由 **22章环境变量** 中的 `ENV_TYPE` 控制：
+> - `ENV_TYPE='dev'` → 加载 `config_dev.ini`
+> - `ENV_TYPE='test'` → 加载 `config_test.ini`
+> - `ENV_TYPE='prod'` → 加载 `config_prod.ini`
+>
+> **禁止在代码中硬编码配置文件路径**，必须通过 `ENV_TYPE` 动态拼接。
+
+> ⚠️ **环境配置差异原则**
+>
+> 所有环境的配置文件内容**基本一致**，唯一区别是 `[app]` 下的 `debug` 配置：
+>
+> | 环境 | debug值 | 说明 |
+> |:-----|:--------|:-----|
+> | dev | `true` | 开发环境开启调试 |
+> | test | `false` | 测试环境关闭调试 |
+> | prod | `false` | 生产环境关闭调试 |
+
 ```ini
-# config_dev.ini
+# config_dev.ini / config_test.ini / config_prod.ini
+# 由 ENV_TYPE 控制加载哪个文件（详见22章）
+# 除debug外，所有环境配置内容一致
 
 [admin_mysql]
 host = 127.0.0.1
@@ -286,7 +307,8 @@ db = 2
 [app]
 host = 0.0.0.0
 secret_key = your-secret-key
-debug = true
+# debug = true   # dev环境
+# debug = false  # test/prod环境
 port = 8000
 
 [request_log]
@@ -298,6 +320,10 @@ full_response_paths = /auth/login,/auth/logout
 origins = *
 supports_credentials = true
 ```
+
+> ⚠️ **配置加载器实现要求**
+>
+> 必须使用 **4.1 配置加载器** 中的 `Config` 类，**禁止**直接使用 `configparser` 或硬编码路径。
 
 ---
 
@@ -2190,6 +2216,16 @@ if __name__ == '__main__':
 | 查询条件 | 符合 **16.2 查询条件类型** |
 | 导入导出 | 符合 **18.3-18.5 导入导出流程** |
 | 代码无冗余 | 无重复定义、无调试代码残留 |
+
+### 28.4 配置管理必查
+
+| 检查项 | 要求 |
+|:-------|:-----|
+| 配置文件路径 | 必须通过 `ENV_TYPE` 动态拼接（`config_{ENV_TYPE}.ini`），禁止硬编码 |
+| 配置加载 | 必须使用 `Config` 类，禁止直接使用 `configparser` |
+| 配置读取 | 禁止使用 `fallback` 默认值，缺失必须启动失败 |
+| debug配置 | dev=true, test/prod=false，与环境匹配 |
+| 敏感信息 | `secret_key`、`password` 等必须从配置文件读取，禁止硬编码 |
 
 ---
 
