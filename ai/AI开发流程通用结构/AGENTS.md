@@ -1,16 +1,22 @@
 # AI Coding 项目规范
 
-## 工作目录
-workdir: D:\ai_create\OpencodeSpider\AI开发流程通用结构
+本文档定义了 AI 在本项目中工作的核心约束，详见 `AI操作规范.md`。
 
 ---
 
-## Python 环境配置
-python_venv: D:\document\my\workspace\venv\practice-env
+## 目录约定
+
+| 类型 | 路径 | 说明 |
+|:-----|:-----|:-----|
+| 虚拟环境 | `../venv/{项目名}-env/Scripts/python` | 项目平级目录 |
+| 规范文档 | `docs/技术规范/` | 技术标准规范 |
+| API 文档 | `docs/API文档/` | 接口详细设计 |
+| 临时文件 | `temp/` | 用完即删 |
 
 ---
 
 ## 注意事项
-- 工作目录已设置为项目根目录
-- 所有会话将使用此配置
-- 如需覆盖，请在项目目录创建对应的配置文件
+
+- 虚拟环境命名：`{项目名}-env`，如 `myapp-env`
+- AI 应根据项目结构推断工作目录
+- 禁止在代码中硬编码绝对路径
