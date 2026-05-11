@@ -39,7 +39,7 @@ project/
 
 ## 3. 环境配置（强制）
 
-### 3.1 环境文件
+### 3.1 环境文件（强制）
 
 | 文件 | 用途 |
 |:-----|:-----|
@@ -47,14 +47,14 @@ project/
 | `.env.test` | 测试环境 |
 | `.env.production` | 生产环境 |
 
-### 3.2 环境变量
+### 3.2 环境变量（强制）
 
 | 变量 | 说明 |
 |:-----|:-----|
 | `VITE_API_BASE_URL` | API 基础路径 |
 | `VITE_API_TARGET` | 开发代理目标地址 |
 
-### 3.3 启动命令
+### 3.3 启动命令（强制）
 
 ```bash
 npm run dev        # 开发环境
@@ -67,7 +67,7 @@ npm run build     # 构建
 
 ## 4. API 调用规范（强制）
 
-### 4.1 axios 实例配置
+### 4.1 axios 实例配置（强制）
 
 ```javascript
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
@@ -78,7 +78,7 @@ const axiosInstance = axios.create({
 })
 ```
 
-### 4.2 请求拦截器
+### 4.2 请求拦截器（强制）
 
 ```javascript
 axiosInstance.interceptors.request.use((config) => {
@@ -90,7 +90,7 @@ axiosInstance.interceptors.request.use((config) => {
 })
 ```
 
-### 4.3 响应拦截器
+### 4.3 响应拦截器（强制）
 
 ```javascript
 axiosInstance.interceptors.response.use(
@@ -126,7 +126,7 @@ axiosInstance.interceptors.response.use(
 )
 ```
 
-### 4.4 Blob 下载（导出/模板）
+### 4.4 Blob 下载（导出/模板）（强制）
 
 ```javascript
 export function downloadBlob(url, data = {}, method = 'POST') {
@@ -144,7 +144,7 @@ export function downloadBlob(url, data = {}, method = 'POST') {
 }
 ```
 
-### 4.5 API 模块结构
+### 4.5 API 模块结构（强制）
 
 ```javascript
 export const api = {
@@ -171,7 +171,7 @@ export const baseApi = {
 }
 ```
 
-### 4.6 API 路径规范
+### 4.6 API 路径规范（强制）
 
 | 操作 | URL 格式 | 示例 |
 |:-----|:---------|:-----|
@@ -189,7 +189,7 @@ export const baseApi = {
 
 ## 5. 错误处理规范（强制）
 
-### 5.1 统一错误处理原则
+### 5.1 统一错误处理原则（强制）
 
 **API 调用必须使用 try-catch**：
 
@@ -209,7 +209,7 @@ async function loadData() {
 }
 ```
 
-### 5.2 错误提示规范
+### 5.2 错误提示规范（强制）
 
 | 场景 | 方式 |
 |:-----|:-----|
@@ -218,7 +218,7 @@ async function loadData() {
 | 导出/下载失败 | Toast |
 | 删除确认 | confirm 对话框 |
 
-### 5.3 401 重定向
+### 5.3 401 重定向（强制）
 
 触发条件：HTTP 401 或业务 code 401
 
@@ -226,7 +226,7 @@ async function loadData() {
 
 ## 6. 登录机制（强制）
 
-### 6.1 Token 存储
+### 6.1 Token 存储（强制）
 
 | 项目 | 实现 |
 |:-----|:-----|
@@ -234,7 +234,7 @@ async function loadData() {
 | 存储 key | `token`、`userInfo` |
 | 传输方式 | Authorization Bearer Header |
 
-### 6.2 登录流程
+### 6.2 登录流程（强制）
 
 ```javascript
 const res = await api.post('/auth/login', {
@@ -248,7 +248,7 @@ if (res.code === 0) {
 }
 ```
 
-### 6.3 退出登录
+### 6.3 退出登录（强制）
 
 ```javascript
 function logout() {
@@ -263,7 +263,7 @@ function logout() {
 
 ## 7. 组件规范（强制）
 
-### 7.1 页面组件结构
+### 7.1 页面组件结构（强制）
 
 ```vue
 <template>
@@ -314,7 +314,7 @@ onMounted(() => loadData())
 </script>
 ```
 
-### 7.2 表格结构
+### 7.2 表格结构（强制）
 
 ```vue
 <table class="table">
@@ -331,7 +331,7 @@ onMounted(() => loadData())
 </table>
 ```
 
-### 7.3 变量命名
+### 7.3 变量命名（强制）
 
 ```javascript
 // 数据
@@ -361,7 +361,7 @@ const selectedIds = ref([])
 
 ## 8. 样式规范（强制）
 
-### 8.1 CSS 变量
+### 8.1 CSS 变量（强制）
 
 ```css
 :root {
@@ -376,7 +376,7 @@ const selectedIds = ref([])
 }
 ```
 
-### 8.2 通用样式类
+### 8.2 通用样式类（强制）
 
 | 类名 | 用途 |
 |:-----|:-----|
@@ -396,7 +396,7 @@ const selectedIds = ref([])
 | `.btn-danger` | 危险按钮 |
 | `.pagination` | 分页 |
 
-### 8.3 布局类
+### 8.3 布局类（强制）
 
 ```css
 .flex { display: flex; }
@@ -411,7 +411,7 @@ const selectedIds = ref([])
 
 ## 9. 状态管理（强制）
 
-### 9.1 Pinia Store
+### 9.1 Pinia Store（强制）
 
 ```javascript
 import { defineStore } from 'pinia'
@@ -442,7 +442,7 @@ export const useAuthStore = defineStore('auth', () => {
 
 ## 10. 工具函数
 
-### 10.1 Toast 消息提示
+### 10.1 Toast 消息提示（强制）
 
 ```javascript
 import { showToast, confirm } from '../utils/toast'
@@ -454,7 +454,7 @@ showToast('警告信息', 'warning')
 if (!await confirm('确认删除？')) return
 ```
 
-### 10.2 Toast 类型
+### 10.2 Toast 类型（强制）
 
 | 类型 | 颜色 |
 |:-----|:-----|
@@ -467,14 +467,14 @@ if (!await confirm('确认删除？')) return
 
 ## 11. 命名规范
 
-### 11.1 文件命名
+### 11.1 文件命名（强制）
 
 | 类型 | 规范 | 示例 |
 |:-----|:-----|:-----|
 | Vue 组件 | PascalCase | `UserManage.vue` |
 | JS 文件 | camelCase | `toast.js` |
 
-### 11.2 变量命名
+### 11.2 变量命名（强制）
 
 | 类型 | 规范 | 示例 |
 |:-----|:-----|:-----|
@@ -482,7 +482,7 @@ if (!await confirm('确认删除？')) return
 | 组件 refs | camelCase | `showModal`, `isEdit` |
 | 事件处理 | handle+Action | `handleSubmit`, `handleDelete` |
 
-### 11.3 CSS 类命名
+### 11.3 CSS 类命名（强制）
 
 使用 kebab-case：`.card-header`, `.modal-overlay`
 
@@ -490,21 +490,21 @@ if (!await confirm('确认删除？')) return
 
 ## 12. 安全规范
 
-### 12.1 Token 安全
+### 12.1 Token 安全（强制）
 
 | 项目 | 说明 |
 |:-----|:-----|
 | 存储 | localStorage（XSS 风险） |
 | 传输 | Authorization Bearer Header（无需 CSRF） |
 
-### 12.2 XSS 防护
+### 12.2 XSS 防护（强制）
 
 - Toast message 使用 `textContent` 插入
 - 禁止传入未转义的 HTML
 
 ---
 
-## 13. Vite 配置
+## 13. Vite 配置（强制）
 
 ```javascript
 import { defineConfig, loadEnv } from 'vite'
@@ -535,6 +535,6 @@ export default defineConfig(({ mode }) => {
 
 ---
 
-## 14. 变更同步
+## 14. 变更同步（强制）
 
 代码变更时需同步修改，详见 `docs/技术规范/代码同步修改规范.md`。
