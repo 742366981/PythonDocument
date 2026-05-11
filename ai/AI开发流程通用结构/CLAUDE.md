@@ -166,8 +166,10 @@
 
 | 检查项 | 执行命令 |
 |:-------|:---------|
-| 虚拟环境是否存在 | `../venv/{项目名}-env/Scripts/python --version` |
-| 依赖是否完整 | `../venv/{项目名}-env/Scripts/pip list` |
+| 虚拟环境是否存在 | `"../venv/{项目名}-env/Scripts/python" --version` |
+| 依赖是否完整 | `"../venv/{项目名}-env/Scripts/pip" list` |
+
+> ⚠️ **Windows 路径必须用引号包起来，参数放在引号外面，用空格分隔**
 
 **执行后向用户确认**：
 ```
