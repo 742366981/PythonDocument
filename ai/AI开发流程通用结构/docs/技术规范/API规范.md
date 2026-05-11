@@ -6,7 +6,7 @@
 
 ## 1. 错误码规范（强制）
 
-### 1.1 错误码定义
+### 1.1 错误码定义（强制）
 
 ```python
 class ErrCode:
@@ -41,7 +41,7 @@ BIZ_ERROR_MESSAGES = {
 }
 ```
 
-### 1.2 错误码速查表
+### 1.2 错误码速查表（强制）
 
 | code | 说明 | 使用场景 |
 |:----:|:-----|:---------|
@@ -57,7 +57,7 @@ BIZ_ERROR_MESSAGES = {
 
 ## 2. 响应规范（强制）
 
-### 2.1 统一响应函数
+### 2.1 统一响应函数（强制）
 
 ```python
 def api_success(data=None, msg='success', code=0):
@@ -92,7 +92,7 @@ def api_page(records, page_no, page_size, total_count):
     })
 ```
 
-### 2.2 响应状态码
+### 2.2 响应状态码（强制）
 
 | code | 说明 |
 |:----:|:-----|
@@ -103,7 +103,7 @@ def api_page(records, page_no, page_size, total_count):
 | 404 | 资源不存在 |
 | 500 | 服务器错误 |
 
-### 2.3 响应使用规范
+### 2.3 响应使用规范（强制）
 
 | 场景 | 使用函数 | data字段 |
 |:-----|:--------|:---------|
@@ -113,7 +113,7 @@ def api_page(records, page_no, page_size, total_count):
 | 分页查询成功 | `api_page` | 返回分页结构 |
 | 参数/未登录/无权限/服务器错误 | `api_error` | 无 |
 
-### 2.4 关键特性
+### 2.4 关键特性（强制）
 
 1. **所有接口统一返回 HTTP 200**，通过响应体 `code` 字段判断成功/失败
 2. **`api_success` 不传data时不返回data字段**，节省带宽
@@ -124,7 +124,7 @@ def api_page(records, page_no, page_size, total_count):
 
 ## 3. API路径规范（强制）
 
-### 3.1 路径规范
+### 3.1 路径规范（强制）
 
 | 类型 | 规则 | 示例 |
 |:-----|:-----|:-----|
@@ -141,7 +141,7 @@ def api_page(records, page_no, page_size, total_count):
 | 模板下载 | /template/download | GET /user/template/download |
 | 下拉接口 | /dict/{dict_type} | GET /user/dict/status |
 
-### 3.2 下拉接口响应格式
+### 3.2 下拉接口响应格式（强制）
 
 统一返回完整字典对象：
 
@@ -187,7 +187,7 @@ def api_page(records, page_no, page_size, total_count):
 
 ## 4. API参数命名规范（强制）
 
-### 4.1 单资源接口
+### 4.1 单资源接口（强制）
 
 **统一使用 `id` 作为参数名**：
 
@@ -211,7 +211,7 @@ POST /user/update {"user_id": 1, "username": "xxx"}
 POST /user/delete {"user_id": 1}
 ```
 
-### 4.2 关联表接口
+### 4.2 关联表接口（强制）
 
 **关联表保留具体参数名**（ user_id、role_id 等），更清晰明确：
 
@@ -221,7 +221,7 @@ POST /user/delete {"user_id": 1}
 | 用户角色解绑 | user_id, role_id | `POST /user_role/unbind {"user_id": 1, "role_id": 1}` |
 | 查询用户角色 | user_id | `GET /user_role/list?user_id=1` |
 
-### 4.3 参数命名速查表
+### 4.3 参数命名速查表（强制）
 
 | 场景 | 参数名 | 示例 |
 |:-----|:-------|:-----|
@@ -233,7 +233,7 @@ POST /user/delete {"user_id": 1}
 
 ## 5. 参数验证规范（强制）
 
-### 5.1 验证函数
+### 5.1 验证函数（强制）
 
 ```python
 def validate_phone(phone):
@@ -260,9 +260,9 @@ def validate_email(email):
     return True, None
 ```
 
-### 5.2 查询条件类型
+### 5.2 查询条件类型（强制）
 
-#### 5.2.1 单选查询
+#### 5.2.1 单选查询（强制）
 
 **单值精确匹配**：
 
@@ -277,7 +277,7 @@ if role_id := request.args.get('role_id'):
     query = query.filter(User.role_id == int(role_id))
 ```
 
-#### 5.2.2 多选查询
+#### 5.2.2 多选查询（强制）
 
 **多个值任一匹配（IN查询）**：
 
@@ -298,7 +298,7 @@ if role_ids:
     query = query.filter(User.role_id.in_(role_ids))
 ```
 
-#### 5.2.3 范围查询
+#### 5.2.3 范围查询（强制）
 
 **数值范围**：
 
@@ -339,7 +339,7 @@ if order_time_end:
     query = query.filter(Order.create_time <= end_dt)
 ```
 
-#### 5.2.4 模糊查询
+#### 5.2.4 模糊查询（强制）
 
 **字符串模糊匹配**：
 
@@ -352,7 +352,7 @@ if username:
     query = query.filter(User.username.like(f'%{username}%'))
 ```
 
-#### 5.2.5 组合查询
+#### 5.2.5 组合查询（强制）
 
 **多种条件组合**：
 
@@ -386,13 +386,13 @@ def build_query():
 
 ## 6. 接口文档规范（强制）
 
-### 6.1 强制要求：先写文档，后写代码
+### 6.1 强制要求：先写文档，后写代码（强制）
 
 > **每个接口必须先在视图函数docstring中编写文档，再编写视图函数实现。**
 
 **必须包含完整字段**：summary、description、parameters（含各参数example）、responses（含examples示例）。
 
-### 6.2 docstring格式要求
+### 6.2 docstring格式要求（强制）
 
 > **重要：标题与`---`之间不能有空行**
 
@@ -451,7 +451,7 @@ def login():
 """
 ```
 
-### 6.3 必需字段
+### 6.3 必需字段（强制）
 
 | 字段 | 必须 | 说明 |
 |:-----|:-----|:-----|
@@ -464,7 +464,7 @@ def login():
 
 ## 7. 导入导出接口规范（强制）
 
-### 7.1 模板设计标准
+### 7.1 模板设计标准（强制）
 
 | 要求 | 说明 |
 |:-----|:-----|
@@ -474,7 +474,7 @@ def login():
 | 唯一约束 | 明确组合唯一字段，重复时upsert |
 | 关联查询 | 填写code（如"US"），内部转ID |
 
-### 7.2 是/否字段规范
+### 7.2 是/否字段规范（强制）
 
 | 模板列名 | 导入填写 | 内部存储 |
 |:---------|:---------|:---------|
@@ -482,7 +482,7 @@ def login():
 | 是否含税 | "是" / "否" | 1 / 0 |
 | 是否必填 | "是" / "否" | 1 / 0 |
 
-### 7.3 导入接口docstring示例
+### 7.3 导入接口docstring示例（强制）
 
 ```python
 @bp.route('/import', methods=['POST'])
@@ -516,7 +516,7 @@ responses:
 """
 ```
 
-### 7.4 导入逻辑实现
+### 7.4 导入逻辑实现（强制）
 
 ```python
 @bp.route('/import', methods=['POST'])
@@ -592,7 +592,7 @@ def import_data():
     }, '导入完成')
 ```
 
-### 7.5 导入参数接收规范
+### 7.5 导入参数接收规范（强制）
 
 | 字段类型 | 模板填写示例 | 内部存储 | 说明 |
 |:---------|:-------------|:---------|:-----|
@@ -602,7 +602,7 @@ def import_data():
 | 是/否字段 | "是" / "否" | 1 / 0 | 自动转换 |
 | 关联字段 | "ADMIN" | 自动转ID | 先查code再查name |
 
-### 7.6 导出接口docstring示例
+### 7.6 导出接口docstring示例（强制）
 
 ```python
 @bp.route('/export', methods=['GET'])
@@ -629,7 +629,7 @@ responses:
 """
 ```
 
-### 7.7 导出逻辑实现
+### 7.7 导出逻辑实现（强制）
 
 ```python
 @bp.route('/export', methods=['GET'])
@@ -682,7 +682,7 @@ def export_data():
     return response
 ```
 
-### 7.8 模板下载接口
+### 7.8 模板下载接口（强制）
 
 ```python
 @bp.route('/template/download', methods=['GET'])
@@ -724,7 +724,7 @@ responses:
     return response
 ```
 
-### 7.9 导入导出完整流程图
+### 7.9 导入导出完整流程图（强制）
 
 ```
 导入流程：
