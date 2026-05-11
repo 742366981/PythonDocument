@@ -556,16 +556,23 @@ responses:
 ## GET 数据字典接口模板
 
 ```python
-@auth_bp.route('/dict', methods=['GET'])
-def dict():
+@auth_bp.route('/dict/{dict_type}', methods=['GET'])
+def dict(dict_type):
     """获取数据字典
 ---
 tags:
   - 大模块/子模块
 summary: 获取数据字典
-description: 获取启用的数据字典列表，用于下拉选项。
+description: 获取指定类型的数据字典列表，用于下拉选项。
 security:
   - Bearer: []
+parameters:
+  - in: path
+    name: dict_type
+    type: string
+    required: true
+    description: 字典类型
+    example: account_type
 responses:
   200:
     description: 查询成功
@@ -573,10 +580,26 @@ responses:
       application/json:
         code: 0
         data:
-          - value: 1
-            label: "启用"
-          - value: 0
-            label: "禁用"
+          - dictCode: 1146
+            dictSort: 20
+            dictLabel: "PayPal"
+            dictValue: "PAY_PAL"
+            dictType: "account_type"
+            cssClass: null
+            listClass: null
+            defaultFlag: "1"
+            status: "0"
+            remark: null
+          - dictCode: 1147
+            dictSort: 10
+            dictLabel: "银行转账"
+            dictValue: "BANK_TRANSFER"
+            dictType: "account_type"
+            cssClass: null
+            listClass: null
+            defaultFlag: "0"
+            status: "0"
+            remark: null
         msg: "success"
     schema:
       type: object
@@ -592,14 +615,46 @@ responses:
           items:
             type: object
             properties:
-              value:
+              dictCode:
                 type: integer
-                description: 值
-                example: 1
-              label:
+                description: 字典编码（对应数据库id）
+                example: 1146
+              dictSort:
+                type: integer
+                description: 排序号
+                example: 20
+              dictLabel:
                 type: string
-                description: 标签
-                example: "启用"
+                description: 显示文本（对应数据库name，没有时用code）
+                example: "PayPal"
+              dictValue:
+                type: string
+                description: 存储值（对应数据库code，没有时用name）
+                example: "PAY_PAL"
+              dictType:
+                type: string
+                description: 字典类型
+                example: "account_type"
+              cssClass:
+                type: string
+                description: CSS样式类
+                example: null
+              listClass:
+                type: string
+                description: 列表样式类
+                example: null
+              defaultFlag:
+                type: string
+                description: 默认标志
+                example: "1"
+              status:
+                type: string
+                description: 状态
+                example: "0"
+              remark:
+                type: string
+                description: 备注
+                example: null
 """
 ```
 

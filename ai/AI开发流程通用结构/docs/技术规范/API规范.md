@@ -4,7 +4,7 @@
 
 ---
 
-## 1. 错误码规范
+## 1. 错误码规范（强制）
 
 ### 1.1 错误码定义
 
@@ -55,7 +55,7 @@ BIZ_ERROR_MESSAGES = {
 
 ---
 
-## 2. 响应规范
+## 2. 响应规范（强制）
 
 ### 2.1 统一响应函数
 
@@ -122,7 +122,9 @@ def api_page(records, page_no, page_size, total_count):
 
 ---
 
-## 3. API路径规范
+## 3. API路径规范（强制）
+
+### 3.1 路径规范
 
 | 类型 | 规则 | 示例 |
 |:-----|:-----|:-----|
@@ -137,6 +139,49 @@ def api_page(records, page_no, page_size, total_count):
 | 导入接口 | /import | POST /user/import |
 | 导出接口 | /export | GET /user/export |
 | 模板下载 | /template/download | GET /user/template/download |
+| 下拉接口 | /dict/{dict_type} | GET /user/dict/status |
+
+### 3.2 下拉接口响应格式
+
+统一返回完整字典对象：
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": [
+    {
+      "dictCode": 1146,
+      "dictSort": 20,
+      "dictLabel": "PayPal",
+      "dictValue": "PAY_PAL",
+      "dictType": "account_type",
+      "cssClass": null,
+      "listClass": null,
+      "defaultFlag": "1",
+      "status": "0",
+      "remark": null
+    }
+  ]
+}
+```
+
+**字段映射：**
+
+| 字典字段 | 数据库字段 | 说明 |
+|:---------|:-----------|:-----|
+| dictCode | id | 唯一标识 |
+| dictLabel | name | 显示文本（没有name时用code） |
+| dictValue | code | 存储值（没有code时用name） |
+| dictSort | sort | 排序号 |
+| dictType | type | 字典类型 |
+| cssClass | css_class | CSS样式类 |
+| listClass | list_class | 列表样式类 |
+| defaultFlag | default_flag | 默认标志 |
+| status | status | 状态 |
+| remark | remark | 备注 |
+
+**只有一个字段时**：dictLabel 和 dictValue 都用那一个。
 
 ---
 
@@ -186,7 +231,7 @@ POST /user/delete {"user_id": 1}
 
 ---
 
-## 5. 参数验证规范
+## 5. 参数验证规范（强制）
 
 ### 5.1 验证函数
 
@@ -339,7 +384,7 @@ def build_query():
 
 ---
 
-## 6. 接口文档规范
+## 6. 接口文档规范（强制）
 
 ### 6.1 强制要求：先写文档，后写代码
 
@@ -417,7 +462,7 @@ def login():
 
 ---
 
-## 7. 导入导出接口规范
+## 7. 导入导出接口规范（强制）
 
 ### 7.1 模板设计标准
 
@@ -735,7 +780,7 @@ responses:
 
 ---
 
-## 8. 标签对照表
+## 8. 标签对照表（强制）
 
 | 大模块 | 子模块 | 标签 |
 |:-------|:-------|:-----|
