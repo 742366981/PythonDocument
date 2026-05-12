@@ -506,7 +506,7 @@ responses:
 | 模板列名 | = 数据库字段含义，简短命名（如"名称"而非"名称字段"） |
 | 模板列 | = 新增接口接收的参数（去除系统字段如id、create_time等） |
 | 导出列 | = 模板列（保持对称） |
-| 唯一约束 | 明确组合唯一字段，重复时upsert |
+| 唯一约束 | 明确组合唯一字段，默认重复则失败；如需更新需用户明确说明 |
 | 关联查询 | 填写code（如"US"），内部转ID |
 
 ### 7.2 是/否字段规范（强制）
@@ -627,15 +627,13 @@ def import_data():
                     else:
                         field_data[field_name] = value
 
-            # 5. 唯一性匹配 + 新增/更新
+            # 5. 唯一性匹配：默认重复则失败
             role_code = field_data.get('role_code')
             existing = Role.query.filter_by(role_code=role_code).first()
             if existing:
-                for key, value in field_data.items():
-                    setattr(existing, key, value)
-            else:
-                role = Role(**field_data)
-                db.session.add(role)
+                raise Exception(f'角色编码{role_code}已存在')
+            role = Role(**field_data)
+            db.session.add(role)
             success_count += 1
         except Exception as e:
             fail_count += 1
