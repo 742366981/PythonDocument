@@ -545,7 +545,7 @@ responses:
 ```
 ┌─────────────────────────────────────┐
 │ 1. 获取模板数据                      │
-│    - 列名：模板Excel的表头           │
+│    - 列名：模板文件（Excel/CSV）的表头 │
 │    - 值：用户填写的单元格内容        │
 └─────────────────┬───────────────────┘
                   ▼
@@ -608,13 +608,13 @@ def import_data():
 tags:
   - 模块管理
 summary: 批量导入数据
-description: 支持Excel文件导入，自动识别新增和更新。唯一字段冲突时执行更新。
+description: 支持Excel/CSV文件导入，默认重复则失败。
 parameters:
   - in: formData
     name: file
     type: file
     required: true
-    description: Excel文件(.xlsx)
+    description: Excel/CSV文件(.xlsx/.csv)
 responses:
   200:
     description: 导入结果
@@ -636,7 +636,7 @@ responses:
 
 **步骤**：
 1. 检查文件存在和格式
-2. 读取Excel表头，映射到字段名
+2. 读取文件表头，映射到字段名
 3. 逐行校验（必填/格式/是-否转换）
 4. 关联字段回填（按列名特征自动识别）
 5. 唯一性校验（重复则失败）
@@ -651,10 +651,10 @@ def import_data():
     if 'file' not in request.files:
         return api_error(400, '请上传文件')
     file = request.files['file']
-    if not file.filename.endswith('.xlsx'):
-        return api_error(400, '仅支持.xlsx格式')
+    if not file.filename.endswith(('.xlsx', '.csv')):
+        return api_error(400, '仅支持.xlsx或.csv格式')
 
-    # 2. 读取Excel
+    # 2. 读取文件（Excel/CSV）
     from openpyxl import load_workbook
     wb = load_workbook(file)
     ws = wb.active
@@ -709,7 +709,7 @@ def export_data():
 tags:
   - 模块管理
 summary: 导出数据
-description: 导出符合查询条件的角色数据为Excel文件。
+description: 导出符合查询条件的角色数据为Excel/CSV文件。
 parameters:
   - in: query
     name: status
@@ -721,7 +721,7 @@ parameters:
     description: 角色ID列表（可选），逗号分隔，如1,2,3
 responses:
   200:
-    description: Excel文件下载
+    description: Excel/CSV文件下载
     content-type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 """
 ```
@@ -749,7 +749,7 @@ def export_data():
             query = query.filter(Role.id.in_(id_list))
     roles = query.all()
 
-    # 2. 构建Excel
+    # 2. 构建文件（Excel/CSV）
     from openpyxl import Workbook
     wb = Workbook()
     ws = wb.active
@@ -770,7 +770,7 @@ def export_data():
     output.seek(0)
     response = make_response(output.getvalue())
     response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response.headers['Content-Disposition'] = 'attachment; filename=role_export.xlsx'
+    response.headers['Content-Disposition'] = 'attachment; filename=role_export.{ext}'  # ext=xlsx或csv
     return response
 ```
 
@@ -795,7 +795,7 @@ def download_template():
     output.seek(0)
     response = make_response(output.getvalue())
     response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    response.headers['Content-Disposition'] = 'attachment; filename=role_template.xlsx'
+    response.headers['Content-Disposition'] = 'attachment; filename=role_template.{ext}'  # ext=xlsx或csv
     return response
 ```
 
@@ -808,7 +808,7 @@ def download_template():
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│  2. 读取Excel   │ ← 模板列名映射到字段名
+│  2. 读取文件    │ ← 表头映射到字段名（Excel/CSV）
 └────────┬────────┘
          ▼
 ┌─────────────────┐
@@ -853,7 +853,7 @@ def download_template():
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│  4. 构建Excel   │ ← 导出列=模板列
+│  4. 构建文件    │ ← 导出列=模板列，支持Excel/CSV
 └────────┬────────┘
          ▼
 ┌─────────────────┐
