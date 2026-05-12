@@ -545,7 +545,7 @@ responses:
 ```
 ┌─────────────────────────────────────┐
 │ 1. 获取模板数据                      │
-│    - 列名：模板文件（Excel/CSV）的表头 │
+│    - 列名：模板文件的表头           │
 │    - 值：用户填写的单元格内容        │
 └─────────────────┬───────────────────┘
                   ▼
@@ -608,13 +608,13 @@ def import_data():
 tags:
   - 模块管理
 summary: 批量导入数据
-description: 支持Excel/CSV文件导入，默认重复则失败。
+description: 支持文件导入，重复则失败。
 parameters:
   - in: formData
     name: file
     type: file
     required: true
-    description: Excel/CSV文件(.xlsx/.csv)
+    description: 文件(.xlsx/.csv)
 responses:
   200:
     description: 导入结果
@@ -709,7 +709,7 @@ def export_data():
 tags:
   - 模块管理
 summary: 导出数据
-description: 导出符合查询条件的角色数据为Excel/CSV文件。
+description: 导出符合查询条件的角色数据为文件。
 parameters:
   - in: query
     name: status
@@ -721,7 +721,7 @@ parameters:
     description: 角色ID列表（可选），逗号分隔，如1,2,3
 responses:
   200:
-    description: Excel/CSV文件下载
+    description: 文件下载
     content-type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 """
 ```
@@ -808,7 +808,7 @@ def download_template():
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│  2. 读取文件    │ ← 表头映射到字段名（Excel/CSV）
+│  2. 读取文件    │ ← 表头映射到字段名
 └────────┬────────┘
          ▼
 ┌─────────────────┐
@@ -853,7 +853,7 @@ def download_template():
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│  4. 构建文件    │ ← 导出列=模板列，支持Excel/CSV
+│  4. 构建文件    │ ← 导出列=模板列
 └────────┬────────┘
          ▼
 ┌─────────────────┐
