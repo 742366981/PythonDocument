@@ -254,7 +254,11 @@
 | 规范 | 说明 |
 |:-----|:-----|
 | API规范.md | 通用 API 设计规范（错误码/响应/路径/参数/导入导出） |
-| Flask后端规范.md | Flask 特定规范 |
+| 数据库规范.md | 通用数据库规范（MySQL/PostgreSQL/MongoDB） |
+| 缓存规范.md | 通用缓存规范（Redis/Memcached） |
+| 定时任务规范.md | 通用定时任务规范（以 Python 为例） |
+| 部署规范.md | 通用部署规范（Docker/K8s/传统部署） |
+| Flask后端规范.md | Flask 特定规范（含 Gunicorn） |
 | Vue前端规范.md | Vue 特定规范 |
 | Git规范.md | Git 使用规范 |
 | 开发环境规范.md | 项目初始化规范 |

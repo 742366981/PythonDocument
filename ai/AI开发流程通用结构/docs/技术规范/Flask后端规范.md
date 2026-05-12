@@ -1,6 +1,12 @@
 # Flask后端项目规范
 
-本文档定义 Flask 后端项目的通用规范，适用于快速搭建完整的Flask项目框架。
+本文档定义 Flask 后端项目的特定规范，Flask 特有的内容（如应用工厂、蓝图、装饰器等）详见本章。
+
+> ⚠️ **通用规范引用**：数据库、缓存、定时任务、部署等通用内容详见各自独立规范文档：
+> - `数据库规范.md`
+> - `缓存规范.md`
+> - `定时任务规范.md`
+> - `部署规范.md`
 
 ---
 
@@ -46,7 +52,8 @@ project/
 │   ├── helpers.py                     # 辅助函数
 │   ├── middleware.py                  # 请求ID中间件
 │   ├── request_log.py                 # 请求日志中间件
-│   └── loggings.py                    # 日志封装
+│   ├── loggings.py                    # 日志封装
+│   └── scheduler.py                   # 定时任务调度器
 │
 ├── docs/                               # 文档
 │   └── swagger_template.md            # Swagger文档模板
@@ -65,8 +72,7 @@ project/
 ├── app.py                              # 应用入口
 ├── requirements.txt                    # 依赖
 ├── gunicorn_loader.py                  # Gunicorn启动器
-├── Dockerfile                          # Docker镜像
-└── docker-compose.yml                  # Docker Compose编排
+└── Dockerfile                          # Docker镜像
 ```
 
 ---
@@ -268,7 +274,7 @@ app_conf = config
 
 > ⚠️ **配置文件与环境变量关联（强制）**
 >
-> 配置文件的加载由 **22章环境变量** 中的 `ENV_TYPE` 控制：
+> 配置文件的加载由 **环境变量** 中的 `ENV_TYPE` 控制：
 > - `ENV_TYPE='dev'` → 加载 `config_dev.ini`
 > - `ENV_TYPE='test'` → 加载 `config_test.ini`
 > - `ENV_TYPE='prod'` → 加载 `config_prod.ini`
@@ -287,7 +293,7 @@ app_conf = config
 
 ```ini
 # config_dev.ini / config_test.ini / config_prod.ini
-# 由 ENV_TYPE 控制加载哪个文件（详见22章）
+# 由 ENV_TYPE 控制加载哪个文件
 # 除debug外，所有环境配置内容一致
 
 [admin_mysql]
@@ -713,18 +719,7 @@ def permission_required(*permission_codes):
 
 ### 10.3 Token管理（Redis）（强制）
 
-```python
-# common/constants.py
-
-class AdminRedisKeys:
-    ADMIN_PREFIX = 'app'
-    ADMIN_USER_TOKEN = f'{ADMIN_PREFIX}:user:token:{{}}'
-    ADMIN_USER_TOKEN_BY_ID = f'{ADMIN_PREFIX}:user:token_by_id:{{}}'
-    ADMIN_CAPTCHA = f'{ADMIN_PREFIX}:captcha:{{}}'
-    # ...
-```
-
-### 10.4 单点登录实现（强制）
+> ⚠️ **通用规范引用**：详见 `docs/技术规范/缓存规范.md`
 
 ```python
 # 同一账号只能在一处登录，新登录会使之前的token失效
@@ -744,187 +739,9 @@ if old_token:
 
 ---
 
-## 11. 数据库模型（强制）
+## 11. Swagger文档 (Flasgger)（强制）
 
-### 11.1 BaseModel基类（强制）
-
-```python
-# db/mysql/helpers.py
-
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-from decimal import Decimal
-
-db = SQLAlchemy()
-
-
-class BaseModel(db.Model):
-    __abstract__ = True
-
-    def save(self):
-        if self.id is None:
-            db.session.add(self)
-        db.session.commit()
-        return self
-
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
-
-    def to_dict(self):
-        result = {}
-        for column in self.__table__.columns:
-            value = getattr(self, column.name)
-            if value is None:
-                result[column.name] = None
-            elif isinstance(value, Decimal):
-                result[column.name] = float(value)
-            elif hasattr(value, 'isoformat'):
-                result[column.name] = value.strftime('%Y-%m-%d %H:%M:%S')
-            else:
-                result[column.name] = value
-        return result
-```
-
-### 11.2 模型示例（强制）
-
-```python
-# db/mysql/models/user.py
-
-from db.mysql.helpers import db, BaseModel
-
-
-class User(BaseModel):
-    __tablename__ = 'user'
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(64), unique=True, index=True, comment='用户名')
-    password = db.Column(db.String(128), comment='密码')
-    phone = db.Column(db.String(32), comment='手机号')
-    role_id = db.Column(db.Integer, index=True, comment='角色id')
-    status = db.Column(db.Integer, default=1, comment='状态 0禁用 1启用')
-    login_count = db.Column(db.Integer, default=0, comment='登录次数')
-    last_login_time = db.Column(db.DateTime, comment='最后登录时间')
-    create_user = db.Column(db.Integer, comment='创建人id')
-    update_user = db.Column(db.Integer, comment='更新人id')
-    create_time = db.Column(db.DateTime, default=datetime.now, comment='创建时间')
-    update_time = db.Column(db.DateTime, onupdate=datetime.now, comment='更新时间')
-```
-
-### 11.3 字段注释规范（强制）
-
-**严格要求：数据库注释必须与需求文档中的字段含义完全一致。**
-
-#### 11.3.1 注释格式（强制）
-
-| 场景 | 格式 | 示例 |
-|:-----|:-----|:-----|
-| 普通字段 | 中文含义 | `comment='用户名'` |
-| 状态字段 | 中文含义+枚举值 | `comment='状态 0禁用 1启用'` |
-| 外键字段 | 中文含义+id | `comment='角色id'` |
-| 是/否字段 | 中文含义+是/否 | `comment='是否启用'` |
-| 时间字段 | 中文含义 | `comment='创建时间'` |
-
-#### 11.3.2 字段命名与注释原则（强制）
-
-> ⚠️ **强制要求：字段名和注释必须与需求文档保持严格一致**
->
-> - **字段名**：必须与需求文档中的字段名称/含义完全一致，包括中英文含义
-> - **注释**：必须与需求文档中的字段含义描述保持一致
-> - **禁止自行命名**：不得自行创造、简化或扩展需求文档中未定义的字段名
-
-| 要求 | 说明 |
-|:-----|:-----|
-| 名称一致 | 字段名必须与需求文档完全一致 |
-| 含义一致 | 注释描述必须与需求文档中的字段含义一致 |
-| 枚举值一致 | 状态字段的枚举值必须与需求文档一致 |
-
-#### 11.3.3 ID字段命名规范（强制）
-
-> ⚠️ **统一使用小写 `id`**，数据库注释、API参数、代码变量保持一致
-
-| 字段类型 | 注释格式 | 示例 |
-|:---------|:---------|:-----|
-| 主键 | 中文含义+id | `用户id`、`角色id`、`权限id` |
-| 外键 | 中文含义+id | `角色id`、`权限id`、`创建人id`、`更新人id` |
-
-**正确示例：**
-```python
-id = db.Column(db.Integer, primary_key=True, comment='用户id')
-role_id = db.Column(db.Integer, comment='角色id')
-permission_id = db.Column(db.Integer, comment='权限id')
-create_user = db.Column(db.Integer, comment='创建人id')
-update_user = db.Column(db.Integer, comment='更新人id')
-```
-
-**错误示例：**
-```python
-# ❌ 大小写不一致
-id = db.Column(db.Integer, primary_key=True, comment='用户ID')
-role_id = db.Column(db.Integer, comment='角色ID')
-```
-
-#### 11.3.4 外键规范（强制）
-
-**禁止使用数据库外键约束**，通过业务逻辑维护数据一致性。
-
-```python
-# 外键字段使用普通INT + 索引
-role_id = db.Column(db.Integer, index=True)
-```
-
----
-
-## 12. Redis缓存（强制）
-
-### 12.1 Redis客户端（强制）
-
-使用 `db/redis/helpers.py` 中的 `admin_redis`：
-
-| 方法 | 说明 |
-|:-----|:-----|
-| `get(key)` | 获取值 |
-| `set(key, value, ex=None)` | 设置值，ex为过期秒数 |
-| `delete(*keys)` | 删除 |
-| `atomic_lock(key, ex=15)` | 分布式锁（nx=True, ex指定时间） |
-| `delete_pattern(pattern)` | 批量删除（支持*通配） |
-| `hget/hset/hdel` | Hash操作 |
-
-### 12.2 Key命名规范（强制）
-
-**所有Key在 `common/constants.py` 的 `AdminRedisKeys` 类中定义，禁止硬编码。**
-
-```python
-class AdminRedisKeys:
-    ADMIN_PREFIX = 'app'
-    ADMIN_USER_TOKEN = f'{ADMIN_PREFIX}:user:token:{{}}'
-    ADMIN_CAPTCHA = f'{ADMIN_PREFIX}:captcha:{{}}'
-    # ...
-```
-
-### 12.3 使用示例（强制）
-
-```python
-from common.constants import AdminRedisKeys
-from db.redis.helpers import admin_redis
-
-# 存储（运行时替换{{}}）
-admin_redis.set(AdminRedisKeys.ADMIN_USER_TOKEN.format(token), user_id, ex=86400)
-
-# 批量清除缓存
-admin_redis.delete_pattern(f'{AdminRedisKeys.ADMIN_PREFIX}:cache:*')
-
-# 定时任务分布式锁
-@with_scheduler_lock('task_name', expire_seconds=3600)
-def my_task():
-    pass
-```
-
----
-
-## 13. Swagger文档 (Flasgger)（强制）
-
-### 13.1 Flasgger配置（强制）
+### 11.1 Flasgger配置（强制）
 
 > ⚠️ **通用规范引用**：详见 `docs/技术规范/API规范.md` 第6章
 
@@ -995,7 +812,7 @@ def register_swagger(app, protect=True):
                     return Response('Login Required', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
 ```
 
-### 13.2 docstring格式要求（强制）
+### 11.2 docstring格式要求（强制）
 
 > ⚠️ **重要：标题与`---`之间不能有空行**，否则Flasgger解析会出错
 
@@ -1054,7 +871,7 @@ def login():
 """
 ```
 
-### 13.3 必需字段（强制）
+### 11.3 必需字段（强制）
 
 | 字段 | 必须 | 说明 |
 |:-----|:-----|:-----|
@@ -1063,30 +880,30 @@ def login():
 | parameters | ✅ | 请求参数（位置、名称、类型、必填、说明、示例） |
 | responses | ✅ | 响应格式（状态码、描述、示例） |
 
-### 13.4 文档导出（强制）
+### 11.4 文档导出（强制）
 
 1. 完成接口开发后，运行 `python tools/export_docs.py` 导出文档
 2. 自动生成 `swagger_spec.json` 和 `API文档.md`
 
 ---
 
-## 14. API路径规范（强制）
+## 12. API路径规范（强制）
 
 > ⚠️ **通用规范引用**：详见 `docs/技术规范/API规范.md` 第3章
 
 ---
 
-## 15. API参数命名规范（强制）
+## 13. API参数命名规范（强制）
 
 > ⚠️ **通用规范引用**：详见 `docs/技术规范/API规范.md` 第4章
 
 ---
 
-## 16. 参数验证（强制）
+## 14. 参数验证（强制）
 
 > ⚠️ **通用规范引用**：详见 `docs/技术规范/API规范.md` 第5章
 
-### 16.1 Flask 参数获取示例（强制）
+### 14.1 Flask 参数获取示例（强制）
 
 ```python
 from flask import request
@@ -1106,9 +923,9 @@ page_size = request.args.get('page_size', 10, type=int)
 
 ---
 
-## 17. 辅助函数
+## 15. 辅助函数
 
-### 17.1 密码处理（强制）
+### 15.1 密码处理（强制）
 
 ```python
 # utils/helpers.py
@@ -1126,7 +943,7 @@ def verify_password(password, hashed):
     return hash_password(password) == hashed
 ```
 
-### 17.2 Token生成（强制）
+### 15.2 Token生成（强制）
 
 ```python
 # utils/helpers.py
@@ -1149,7 +966,7 @@ def generate_login_token(user_id, username):
     return hashlib.sha256(raw.encode()).hexdigest()
 ```
 
-### 17.3 验证码生成（强制）
+### 15.3 验证码生成（强制）
 
 ```python
 # utils/helpers.py
@@ -1177,11 +994,11 @@ def generate_captcha_image(code):
 
 ---
 
-## 18. Excel导入导出（强制）
+## 16. Excel导入导出（强制）
 
 > ⚠️ **通用规范引用**：详见 `docs/技术规范/API规范.md` 第7章
 
-### 18.1 Flask 特定实现（强制）
+### 16.1 Flask 特定实现（强制）
 
 ```python
 # 获取上传文件
@@ -1211,7 +1028,7 @@ return response
 
 ---
 
-## 19. CORS跨域（强制）
+## 17. CORS跨域（强制）
 
 ```python
 # 在create_app中
@@ -1223,9 +1040,11 @@ CORS(app, resources={r'/*': {'origins': cors_origins_list, 'supports_credentials
 
 ---
 
-## 20. Gunicorn配置
+## 18. Gunicorn配置
 
-### 20.1 Gunicorn启动器（强制）
+> ⚠️ **技术锁定**：Gunicorn 是 Python WSGI 特有的应用服务器，不属于通用部署规范。
+
+### 18.1 Gunicorn启动器（强制）
 
 ```python
 # gunicorn_loader.py
@@ -1273,66 +1092,9 @@ if __name__ == '__main__':
 
 ---
 
-## 21. Docker配置
+## 19. 环境变量（强制）
 
-### 21.1 Dockerfile（强制）
-
-```dockerfile
-FROM python:3.13.3
-
-WORKDIR /{项目名}
-
-ADD ./requirements.txt /{项目名}
-
-RUN python3 -m pip install -U pip -i https://mirrors.aliyun.com/pypi/simple
-
-RUN pip3 install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple
-```
-
-### 21.2 docker-compose.yml（强制）
-
-```yaml
-version: '2.1'
-services:
-  {项目名}:
-    build:
-      context: ./
-      dockerfile: Dockerfile
-    image: python-{项目名}
-    container_name: {项目名}
-    working_dir: /{项目名}
-    restart: always
-    ports:
-      - '{端口}:{端口}'
-    command: python -u gunicorn_loader.py
-    volumes:
-      - ./{项目名}:/{项目名}
-    environment:
-        - TZ=Asia/Chongqing
-    logging:
-        driver: 'json-file'
-        options:
-          max-size: '100m'
-          max-file: '2'
-```
-
-**启动命令：**
-```bash
-# 构建并启动
-docker-compose up -d
-
-# 查看日志
-docker-compose logs -f
-
-# 停止
-docker-compose down
-```
-
----
-
-## 22. 环境变量（强制）
-
-### 22.1 环境类型（强制）
+### 19.1 环境类型（强制）
 
 ```python
 # common/constants.py
@@ -1350,7 +1112,7 @@ if sys_args:
 IS_PRODUCT = ENV_TYPE == 'prod'
 ```
 
-### 22.2 启动命令（强制）
+### 19.2 启动命令（强制）
 
 ```bash
 # 开发环境
@@ -1365,284 +1127,9 @@ python app.py --prod
 
 ---
 
-## 23. 数据库初始化（强制）
+## 20. 规范执行检查清单（强制）
 
-```python
-# db_init/init_all.py
-
-from apps import create_app
-from db.mysql.helpers import db
-
-
-def init_database():
-    app = create_app(protect_swagger=False)
-    with app.app_context():
-        # 创建所有表
-        db.create_all()
-        # 初始化数据
-        init_default_data()
-
-
-if __name__ == '__main__':
-    init_database()
-```
-
----
-
-## 24. 命名规范（强制）
-
-### 24.1 数据库字段（强制）
-
-| 类型 | 规则 | 示例 |
-|:-----|:-----|:-----|
-| 普通字段 | 下划线 | user_name |
-| 外键 | xxx_id | role_id |
-| 状态 | status (0禁用/1启用) | status |
-| 时间 | create_time, update_time | create_time |
-| 创建人/更新人 | create_user/update_user (存用户id) | create_user |
-
-### 24.2 Python变量（强制）
-
-| 类型 | 规则 | 示例 |
-|:-----|:-----|:-----|
-| 普通变量 | 下划线 | user_list |
-| 常量 | 全大写 | PAGE_SIZE |
-| 类名 | 大驼峰 | UserService |
-
-### 24.3 API路径（强制）
-
-| 类型 | 规则 | 示例 |
-|:-----|:-----|:-----|
-| URL | 中横线 | /user-info |
-| 文件名 | 下划线 | user_info.py |
-
----
-
-## 25. 表名规范（强制）
-
-### 25.1 命名格式（强制）
-
-**表名格式：`{项目前缀}_{模块前缀}_{实体名}`**
-
-| 组成部分 | 说明 | 示例 |
-|:---------|:-----|:-----|
-| 项目前缀 | 标识项目归属，建议2-6字符 | `ec`（电商）、`cbjsq`（成本计算器） |
-| 模块前缀 | 标识业务模块 | `user`、`order`、`product` |
-| 实体名 | 具体表名 | `info`、`detail`、`config` |
-
-**命名规则：**
-- 使用**下划线**分隔
-- 全部小写
-- 避免缩写，使用完整单词
-- 表名体现业务含义
-
-**示例：**
-```python
-# 电商项目
-class User(db.Model):
-    __tablename__ = 'ec_user'
-
-class Order(db.Model):
-    __tablename__ = 'ec_order_product'
-
-# 成本计算器
-class ExchangeRate(db.Model):
-    __tablename__ = 'cbjsq_exchange_rate'
-```
-
-### 25.2 前缀选择建议（强制）
-
-| 项目类型 | 建议前缀 | 说明 |
-|:---------|:--------|:-----|
-| 内部项目 | 2-4字符项目缩写 | 如 `sys`、`oa`、`crm` |
-| 乙方外包 | 6字符防冲突前缀 | 如 `proj_{甲方简写}` |
-| 多项目共享库 | 8字符唯一前缀 | 如 `ml_{项目名}` |
-| 微服务 | 服务名缩写 | 如 `user_svc`、`pay_svc` |
-
----
-
-## 26. 创建人/更新人规范（强制）
-
-### 26.1 字段规范（强制）
-
-- 使用 `create_user` / `update_user` 存储用户id，不存储用户名
-- 创建时自动填充：`create_user = g.user_id`
-- 更新时自动填充：`update_user = g.user_id`
-
-### 26.2 表设计（强制）
-
-```python
-create_user = db.Column(db.Integer, comment='创建人id')
-update_user = db.Column(db.Integer, comment='更新人id')
-create_time = db.Column(db.DateTime, default=datetime.now, comment='创建时间')
-update_time = db.Column(db.DateTime, onupdate=datetime.now, comment='更新时间')
-```
-
----
-
-## 27. 定时任务机制（强制）
-
-### 27.1 技术选型（强制）
-
-| 组件 | 技术 | 说明 |
-|:-----|:-----|:-----|
-| 调度器 | APScheduler BackgroundScheduler | 后台定时任务调度 |
-| 分布式锁 | Redis | 多进程环境下的任务互斥 |
-| 执行器 | ThreadPoolExecutor | 线程池执行任务 |
-
-### 27.2 调度器配置（强制）
-
-```python
-# utils/scheduler.py
-
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.executors.pool import ThreadPoolExecutor
-
-scheduler = BackgroundScheduler(
-    executors={
-        'default': ThreadPoolExecutor(10)  # 线程池大小
-    },
-    job_defaults={
-        'coalesce': False,   # 不合并错过的任务
-        'max_instances': 1   # 同一任务最多一个实例
-    }
-)
-```
-
-### 27.3 App Context包装器（强制）
-
-定时任务在独立线程中执行，需要手动注入Flask应用上下文：
-
-```python
-# utils/scheduler.py
-
-_app = None
-
-def _job_wrapper(func):
-    """为定时任务包装app_context"""
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        with _app.app_context():
-            return func(*args, **kwargs)
-    return wrapper
-
-
-def init_scheduler(app: Flask):
-    """初始化调度器，注册定时任务"""
-    global _app
-    _app = app
-    scheduler.start()
-```
-
-### 27.4 执行时间类型（强制）
-
-| 类型 | 参数 | 示例 |
-|:-----|:-----|:-----|
-| cron | hour, minute, day | 每天凌晨2:00执行 |
-| interval | minutes/hours/days | 每5分钟执行 |
-| date | run_date | 特定日期执行 |
-
-```python
-# Cron表达式
-scheduler.add_job(func, 'cron', hour=2, minute=0)           # 每天2:00
-scheduler.add_job(func, 'cron', day_of_week='mon-fri')       # 工作日
-
-# Interval表达式
-scheduler.add_job(func, 'interval', minutes=5)                # 每5分钟
-scheduler.add_job(func, 'interval', hours=1)                # 每小时
-```
-
-### 27.5 Redis分布式锁（强制）
-
-```python
-# utils/scheduler_lock.py
-
-class SchedulerLock:
-    """Redis分布式锁"""
-
-    LOCK_PREFIX = f'{AdminRedisKeys.ADMIN_PREFIX}:scheduler:lock'
-
-    def __init__(self, lock_key, expire_seconds=300):
-        self.lock_key = f'{self.LOCK_PREFIX}:{lock_key}'
-        self.expire_seconds = expire_seconds
-
-    def acquire(self):
-        """尝试获取锁"""
-        result = admin_redis.atomic_lock(self.lock_key, ex=self.expire_seconds)
-        return result is not None and result != 0
-
-    def release(self):
-        """释放锁"""
-        admin_redis.delete(self.lock_key)
-
-    def __enter__(self):
-        return self.acquire()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.release()
-```
-
-### 27.6 任务装饰器（强制）
-
-```python
-# jobs/example.py
-
-from utils.scheduler_lock import with_scheduler_lock
-from utils.loggings import general_log
-
-
-@with_scheduler_lock('daily_cleanup', expire_seconds=3600)
-def daily_cleanup():
-    """
-    每日清理任务示例
-
-    执行时间: 每天凌晨2:00
-    锁超时: 1小时
-    """
-    general_log.save_info("[daily_cleanup] 开始执行每日清理")
-    # 任务逻辑...
-```
-
-### 27.7 启动配置（强制）
-
-```python
-# app.py
-
-def init_scheduler_on_startup():
-    """仅在生产环境启动定时任务"""
-    if not IS_PRODUCT:
-        print("定时任务调度器仅在生产模式启动")
-        return
-
-    import atexit
-    from utils.scheduler import init_scheduler, shutdown_scheduler
-
-    init_scheduler(app)
-    print("定时任务调度器已启动 (生产模式)")
-    atexit.register(shutdown_scheduler)
-
-
-if __name__ == '__main__':
-    app = create_app()
-    init_scheduler_on_startup()
-    app.run(host=app_conf.get('host'), port=app_conf.getint('port'))
-```
-
-### 27.8 注意事项（强制）
-
-| 注意事项 | 说明 |
-|:---------|:-----|
-| 生产模式 | 定时任务仅在 `--prod` 模式下启动 |
-| app_context | 任务函数会自动包装app_context，可直接使用db/redis |
-| 分布式锁 | 多进程部署时必须使用 `@with_scheduler_lock` 装饰器 |
-| 锁超时 | 根据任务预估执行时间设置 `expire_seconds`，避免任务卡死 |
-| replace_existing | 使用 `replace_existing=True` 确保任务ID唯一，允许更新 |
-
----
-
-## 28. 规范执行检查清单（强制）
-
-### 28.1 接口开发时必查（强制）
+### 20.1 接口开发时必查（强制）
 
 | 检查项 | 要求 |
 |:-------|:-----|
@@ -1655,27 +1142,17 @@ if __name__ == '__main__':
 | 导出接口 | docstring需声明content-type为Excel格式 |
 | 模板下载 | 模板列名必须与需求文档字段含义一致 |
 
-### 28.2 模型定义时必查（强制）
+### 20.2 提交前必查（强制）
 
 | 检查项 | 要求 |
 |:-------|:-----|
-| 主键注释 | 使用小写 `id`（如`用户id`） |
-| 外键注释 | 使用小写 `id`（如`角色id`、`创建人id`） |
-| 状态注释 | 标注枚举值（如`状态 0禁用 1启用`） |
-| 字段命名 | 必须与需求文档中的字段名称/含义完全一致 |
-
-### 28.3 提交前必查（强制）
-
-| 检查项 | 要求 |
-|:-------|:-----|
-| 接口参数 | 符合 **15. API参数命名规范** |
-| 字段注释 | 符合 **11.3 字段注释规范** |
-| docstring格式 | 符合 **13.2 docstring格式要求** |
-| 查询条件 | 符合 **16.2 查询条件类型** |
-| 导入导出 | 符合 **18.3-18.5 导入导出流程** |
+| 接口参数 | 符合 **API参数命名规范** |
+| docstring格式 | 符合 **11.2 docstring格式要求** |
+| 查询条件 | 符合 **参数验证** 规范 |
+| 导入导出 | 符合 **API规范** 导入导出流程 |
 | 代码无冗余 | 无重复定义、无调试代码残留 |
 
-### 28.4 配置管理必查（强制）
+### 20.3 配置管理必查（强制）
 
 | 检查项 | 要求 |
 |:-------|:-----|
@@ -1694,6 +1171,10 @@ if __name__ == '__main__':
 | 文档 | 位置 |
 |:-----|:-----|
 | **API通用规范** | `docs/技术规范/API规范.md` |
+| **数据库规范** | `docs/技术规范/数据库规范.md` |
+| **缓存规范** | `docs/技术规范/缓存规范.md` |
+| **定时任务规范** | `docs/技术规范/定时任务规范.md` |
+| **部署规范** | `docs/技术规范/部署规范.md` |
 | Swagger文档模板 | `docs/API文档/swagger_template.md` |
 | API文档导出脚本 | `tools/export_docs.py` |
 | 导出后API文档 | `docs/API文档/swagger_spec.json` |

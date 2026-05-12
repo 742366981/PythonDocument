@@ -442,7 +442,7 @@ export const useAuthStore = defineStore('auth', () => {
 
 ## 10. 工具函数
 
-### 10.1 Toast 消息提示（强制）
+### 10.1 Toast 消息提示
 
 ```javascript
 import { showToast, confirm } from '../utils/toast'
@@ -454,7 +454,7 @@ showToast('警告信息', 'warning')
 if (!await confirm('确认删除？')) return
 ```
 
-### 10.2 Toast 类型（强制）
+### 10.2 Toast 类型
 
 | 类型 | 颜色 |
 |:-----|:-----|
