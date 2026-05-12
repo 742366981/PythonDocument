@@ -279,6 +279,7 @@
 | 缓存规范.md | 通用缓存规范（Redis/Memcached） |
 | 定时任务规范.md | 通用定时任务规范（以 Python 为例） |
 | 部署规范.md | 通用部署规范（Docker/K8s/传统部署） |
+| 导入导出规范.md | 导入导出接口规范（模板/字段/流程） |
 | 导入导出样式规范.md | 导入导出文件样式要求（Excel/CSV） |
 | Flask后端规范.md | Flask 特定规范（含 Gunicorn） |
 | Vue前端规范.md | Vue 特定规范 |
