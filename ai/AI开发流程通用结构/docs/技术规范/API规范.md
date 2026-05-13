@@ -220,20 +220,20 @@ def api_page(records, page_no, page_size, total_count):
 
 **在接口前缀之后，路径按以下规则命名**：
 
-| 类型 | 规则 | 示例 |
-|:-----|:-----|:-----|
-| URL路径 | 中横线分隔 | /exchange-rate |
-| 列表接口 | /list | /ec/order/list |
-| 详情接口 | /detail | /ec/order/detail |
-| 创建接口 | /create | POST /ec/order/create |
-| 更新接口 | /update | POST /ec/order/update |
-| 状态修改 | /update-status | POST /ec/order/update-status |
-| 删除接口 | /delete | POST /ec/order/delete |
-| 批量删除 | /batch-delete | POST /ec/order/batch-delete |
-| 导入接口 | /import | POST /ec/order/import |
-| 导出接口 | /export | GET /ec/order/export |
-| 模板下载 | /template/download | GET /ec/order/template/download |
-| 下拉接口 | /dict/{dict_type} | GET /ec/base_data/order_status |
+| 类型 | 规则 | 完整示例 |
+|:-----|:-----|:---------|
+| URL路径 | 中横线分隔 | `/exchange-rate` |
+| 列表接口 | `/list` | `GET /{前缀}/order/list` |
+| 详情接口 | `/detail` | `GET /{前缀}/order/detail` |
+| 创建接口 | `/create` | `POST /{前缀}/order/create` |
+| 更新接口 | `/update` | `POST /{前缀}/order/update` |
+| 状态修改 | `/update-status` | `POST /{前缀}/order/update-status` |
+| 删除接口 | `/delete` | `POST /{前缀}/order/delete` |
+| 批量删除 | `/batch-delete` | `POST /{前缀}/order/batch-delete` |
+| 导入接口 | `/import` | `POST /{前缀}/order/import` |
+| 导出接口 | `/export` | `GET /{前缀}/order/export` |
+| 模板下载 | `/template/download` | `GET /{前缀}/order/template/download` |
+| 下拉接口 | `/base_data/{表名}` | `GET /{前缀}/base_data/order_status` |
 
 ### 3.3 下拉接口响应格式（强制）
 
