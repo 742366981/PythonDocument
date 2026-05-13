@@ -3,24 +3,29 @@
 # 用法: bash pull_norms.sh
 # 规则：
 #   - .gitignore、README.md 存在就跳过
-#   - tools/ 下：覆盖所有文件
-#   - docs/ 和其他目录：只新建不存在的，已有的不动
+#   - tools/：只新建不存在的，已有不动
+#   - docs/ 和其他目录：覆盖所有文件
 
 set -e
 
-REPO_URL="https://github.com/742366981/PythonDocument"
+REPO_URL="https://githubfast.com/742366981/PythonDocument"
 # 国内加速镜像（如需）
 # REPO_URL="https://ghproxy.com/https://github.com/742366981/PythonDocument"
+# REPO_URL="https://gitclone.com/github.com/742366981/PythonDocument"
+# REPO_URL="https://hub.fastgit.xyz"
 BRANCH="master"
-
-echo "正在拉取规范体系..."
 
 # 创建临时目录
 TEMP_DIR=$(mktemp -d)
 
+# 退出时清理临时目录
+trap 'rm -rf "${TEMP_DIR}"' EXIT INT TERM
+
+echo "正在拉取规范体系..."
+
 # 使用 git clone 拉取（--depth 1 只拉取最新版本）
 echo "下载中..."
-git clone --depth 1 --single-branch --branch "${BRANCH}" "${REPO_URL}" "${TEMP_DIR}/repo" 2>/dev/null || {
+git clone --depth 1 --single-branch --branch "${BRANCH}" "${REPO_URL}" "${TEMP_DIR}/repo" || {
     echo "错误：下载失败"
     rm -rf "${TEMP_DIR}"
     exit 1
@@ -37,11 +42,12 @@ fi
 echo "合并到当前目录..."
 
 # 定义处理函数
+# 参数：$1=源 $2=目标 $3=名称 $4=是否覆盖(yes/no)
 process_item() {
     local src="$1"
     local dst="$2"
     local name="$3"
-    local is_tools="$4"
+    local overwrite="$4"
 
     if [ -d "${src}" ]; then
         mkdir -p "${dst}"
@@ -50,7 +56,7 @@ process_item() {
             sub_name=$(basename "$sub")
             # 跳过脚本
             [ "$sub_name" = "pull_norms.sh" ] && continue
-            process_item "$sub" "${dst}/${sub_name}" "$sub_name" "$is_tools"
+            process_item "$sub" "${dst}/${sub_name}" "$sub_name" "$overwrite"
         done
     elif [ -f "${src}" ]; then
         # 跳过 .gitignore 和 README.md
@@ -58,12 +64,12 @@ process_item() {
         [ "$name" = "README.md" ] && return
 
         if [ -f "${dst}" ]; then
-            if [ "$is_tools" = "yes" ]; then
-                # tools 目录：覆盖
+            if [ "$overwrite" = "yes" ]; then
+                # 覆盖已有文件
                 cp -f "${src}" "${dst}"
                 echo "  ~ ${name}"
             else
-                # 其他目录：保留原有的
+                # 不覆盖已有文件
                 :
             fi
         else
@@ -84,11 +90,11 @@ for item in "${NORM_DIR}"/*; do
 
     if [ -d "$item" ]; then
         if [ "$item_name" = "tools" ]; then
-            # tools 目录：覆盖所有文件
-            process_item "$item" "./tools" "$item_name" "yes"
-        else
-            # 其他目录：只新建不存在的
+            # tools/ 只新建不覆盖
             process_item "$item" "./${item_name}" "$item_name" "no"
+        else
+            # 其他目录覆盖所有文件
+            process_item "$item" "./${item_name}" "$item_name" "yes"
         fi
     else
         # 文件
