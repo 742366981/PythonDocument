@@ -66,10 +66,12 @@ move "%SOURCE_DIR%" "%TARGET_DIR%"
 :: 恢复备份的文件
 if %SKIP_GITIGNORE%==1 (
     copy "%TEMP_DIR%\gitignore_backup" "%TARGET_DIR%\.gitignore" >nul
+    echo   - .gitignore 已恢复
 )
 
 if %SKIP_README%==1 (
     copy "%TEMP_DIR%\readme_backup" "%TARGET_DIR%\README.md" >nul
+    echo   - README.md 已恢复
 )
 
 :: 清理
