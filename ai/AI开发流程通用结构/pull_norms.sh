@@ -2,8 +2,9 @@
 # 拉取规范体系并覆盖到当前目录
 # 用法: bash pull_norms.sh
 # 规则：
-#   - 项目外拉取 AI开发流程通用结构/
-#   - 覆盖所有文件，除了 .gitignore、README.md、tools/下已存在的文件
+#   - .gitignore、README.md 存在就跳过
+#   - tools/ 下：覆盖所有文件
+#   - docs/ 和其他目录：只新建不存在的，已有的不动
 
 set -e
 
@@ -15,18 +16,16 @@ echo "正在拉取规范体系..."
 # 创建临时目录
 TEMP_DIR=$(mktemp -d)
 
-# 下载 tarball
+# 下载并解压
 echo "下载中..."
 curl -sL "${REPO_URL}/archive/${BRANCH}.tar.gz" -o "${TEMP_DIR}/archive.tar.gz"
 
-# 解压
 echo "解压中..."
 tar -xzf "${TEMP_DIR}/archive.tar.gz" -C "${TEMP_DIR}"
 
-# 规范内容在 PythonDocument-master/ai/AI开发流程通用结构/
-SOURCE_DIR="${TEMP_DIR}/PythonDocument-${BRANCH}/ai/AI开发流程通用结构"
-
-if [ ! -d "${SOURCE_DIR}" ]; then
+# 找到规范目录
+NORM_DIR=$(find "${TEMP_DIR}" -type d -name "AI开发流程通用结构" 2>/dev/null | head -1)
+if [ -z "${NORM_DIR}" ] || [ ! -d "${NORM_DIR}" ]; then
     echo "错误：未找到规范目录"
     rm -rf "${TEMP_DIR}"
     exit 1
@@ -34,55 +33,75 @@ fi
 
 echo "合并到当前目录..."
 
-# 遍历源目录内容
-for item in "${SOURCE_DIR}"/*; do
-    item_name=$(basename "${item}")
+# 定义处理函数
+process_item() {
+    local src="$1"
+    local dst="$2"
+    local name="$3"
+    local is_tools="$4"
 
-    # 不处理脚本本身
-    if [ "${item_name}" = "pull_norms.sh" ] || [ "${item_name}" = "pull_norms.bat" ]; then
-        continue
-    fi
+    if [ -d "${src}" ]; then
+        mkdir -p "${dst}"
+        for sub in "${src}"/*; do
+            [ -e "$sub" ] || continue
+            sub_name=$(basename "$sub")
+            # 跳过脚本
+            [ "$sub_name" = "pull_norms.sh" ] || [ "$sub_name" = "pull_norms.bat" ] && continue
+            process_item "$sub" "${dst}/${sub_name}" "$sub_name" "$is_tools"
+        done
+    elif [ -f "${src}" ]; then
+        # 跳过 .gitignore 和 README.md
+        [ "$name" = ".gitignore" ] && return
+        [ "$name" = "README.md" ] && return
 
-    if [ -d "${item}" ]; then
-        # 目录：整体覆盖，特殊处理 tools/
-        if [ "${item_name}" = "tools" ]; then
-            # tools 目录：只覆盖已存在的文件，不删除新增的
-            mkdir -p "${item_name}"
-            for sub_item in "${item}"/*; do
-                sub_name=$(basename "${sub_item}")
-                if [ -f "${item_name}/${sub_name}" ]; then
-                    cp "${sub_item}" "${item_name}/${sub_name}"
-                    echo "  ~ ${item_name}/${sub_name}"
-                else
-                    cp "${sub_item}" "${item_name}/${sub_name}"
-                    echo "  + ${item_name}/${sub_name}"
-                fi
-            done
-        else
-            # 其他目录：直接覆盖
-            rm -rf "${item_name}"
-            cp -r "${item}" .
-            echo "  ~ ${item_name}/ (覆盖)"
-        fi
-    else
-        # 文件：判断是否跳过
-        if [ -f "${item_name}" ]; then
-            # 文件已存在
-            if [ "${item_name}" = ".gitignore" ] || [ "${item_name}" = "README.md" ]; then
-                echo "  = ${item_name} (跳过)"
+        if [ -f "${dst}" ]; then
+            if [ "$is_tools" = "yes" ]; then
+                # tools 目录：覆盖
+                cp -f "${src}" "${dst}"
+                echo "  ~ ${name}"
             else
-                cp "${item}" "${item_name}"
-                echo "  ~ ${item_name} (覆盖)"
+                # 其他目录：保留原有的
+                :
             fi
         else
-            # 文件不存在
-            cp "${item}" .
-            echo "  + ${item_name} (新建)"
+            # 不存在则创建
+            cp -f "${src}" "${dst}"
+            echo "  + ${name}"
+        fi
+    fi
+}
+
+# 遍历规范目录
+for item in "${NORM_DIR}"/*; do
+    [ -e "$item" ] || continue
+    item_name=$(basename "$item")
+
+    # 跳过脚本
+    [ "$item_name" = "pull_norms.sh" ] || [ "$item_name" = "pull_norms.bat" ] && continue
+
+    if [ -d "$item" ]; then
+        if [ "$item_name" = "tools" ]; then
+            # tools 目录：覆盖所有文件
+            process_item "$item" "./tools" "$item_name" "yes"
+        else
+            # 其他目录：只新建不存在的
+            process_item "$item" "./${item_name}" "$item_name" "no"
+        fi
+    else
+        # 文件
+        [ "$item_name" = ".gitignore" ] && echo "  = ${item_name} (跳过)" && continue
+        [ "$item_name" = "README.md" ] && echo "  = ${item_name} (跳过)" && continue
+        if [ -f "$item_name" ]; then
+            cp -f "$item" "$item_name"
+            echo "  ~ ${item_name}"
+        else
+            cp -f "$item" "$item_name"
+            echo "  + ${item_name}"
         fi
     fi
 done
 
-# 清理临时目录
+# 清理
 rm -rf "${TEMP_DIR}"
 
 echo "完成！规范体系已更新"
