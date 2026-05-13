@@ -218,11 +218,10 @@ def api_page(records, page_no, page_size, total_count):
 
 ### 3.2 路径规范（强制）
 
-**在接口前缀之后，路径按以下规则命名**：
+**在接口前缀之后，路径片段使用中横线分隔**（如 `exchange-rate`），接口路径按以下规则命名：
 
-| 类型 | 规则 | 完整示例 |
-|:-----|:-----|:---------|
-| URL路径 | 中横线分隔 | `/exchange-rate` |
+| 接口类型 | 路径规则 | 完整示例 |
+|:---------|:---------|:---------|
 | 列表接口 | `/list` | `GET /{前缀}/order/list` |
 | 详情接口 | `/detail` | `GET /{前缀}/order/detail` |
 | 创建接口 | `/create` | `POST /{前缀}/order/create` |
@@ -233,7 +232,7 @@ def api_page(records, page_no, page_size, total_count):
 | 导入接口 | `/import` | `POST /{前缀}/order/import` |
 | 导出接口 | `/export` | `GET /{前缀}/order/export` |
 | 模板下载 | `/template/download` | `GET /{前缀}/order/template/download` |
-| 下拉接口 | `/base_data/{表名}` | `GET /{前缀}/base_data/order_status` |
+| 基础数据接口 | `/base_data/{表名}` | `GET /{前缀}/base_data/order_status` |
 
 ### 3.3 下拉接口响应格式（强制）
 
