@@ -18,16 +18,17 @@ echo "正在拉取规范体系..."
 # 创建临时目录
 TEMP_DIR=$(mktemp -d)
 
-# 下载并解压
+# 使用 git clone 拉取（--depth 1 只拉取最新版本）
 echo "下载中..."
-curl -sL "${REPO_URL}/archive/${BRANCH}.tar.gz" -o "${TEMP_DIR}/archive.tar.gz"
+git clone --depth 1 --single-branch --branch "${BRANCH}" "${REPO_URL}" "${TEMP_DIR}/repo" 2>/dev/null || {
+    echo "错误：下载失败"
+    rm -rf "${TEMP_DIR}"
+    exit 1
+}
 
-echo "解压中..."
-tar -xzf "${TEMP_DIR}/archive.tar.gz" -C "${TEMP_DIR}"
-
-# 找到规范目录
-NORM_DIR=$(find "${TEMP_DIR}" -type d -name "AI开发流程通用结构" 2>/dev/null | head -1)
-if [ -z "${NORM_DIR}" ] || [ ! -d "${NORM_DIR}" ]; then
+# 规范目录
+NORM_DIR="${TEMP_DIR}/repo/ai/AI开发流程通用结构"
+if [ ! -d "${NORM_DIR}" ]; then
     echo "错误：未找到规范目录"
     rm -rf "${TEMP_DIR}"
     exit 1
