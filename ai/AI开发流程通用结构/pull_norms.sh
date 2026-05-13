@@ -46,7 +46,7 @@ process_item() {
             [ -e "$sub" ] || continue
             sub_name=$(basename "$sub")
             # 跳过脚本
-            [ "$sub_name" = "pull_norms.sh" ] || [ "$sub_name" = "pull_norms.bat" ] && continue
+            [ "$sub_name" = "pull_norms.sh" ] && continue
             process_item "$sub" "${dst}/${sub_name}" "$sub_name" "$is_tools"
         done
     elif [ -f "${src}" ]; then
@@ -77,7 +77,7 @@ for item in "${NORM_DIR}"/*; do
     item_name=$(basename "$item")
 
     # 跳过脚本
-    [ "$item_name" = "pull_norms.sh" ] || [ "$item_name" = "pull_norms.bat" ] && continue
+    [ "$item_name" = "pull_norms.sh" ] && continue
 
     if [ -d "$item" ]; then
         if [ "$item_name" = "tools" ]; then
