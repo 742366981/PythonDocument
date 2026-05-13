@@ -50,16 +50,19 @@ if [ -d "${TARGET_DIR}" ]; then
     rm -rf "${TARGET_DIR}"
 fi
 
-# 移动到当前目录
-mv "${SOURCE_DIR}" ./
+# 创建目标目录结构
+mkdir -p "$(dirname "${TARGET_DIR}")"
+
+# 移动到目标位置
+mv "${SOURCE_DIR}" "${TARGET_DIR}"
 
 # 恢复备份的文件
 if [ ${SKIP_GITIGNORE} -eq 1 ]; then
-    mv "${TEMP_DIR}/gitignore_backup" "${TARGET_DIR}/.gitignore"
+    cp "${TEMP_DIR}/gitignore_backup" "${TARGET_DIR}/.gitignore"
 fi
 
 if [ ${SKIP_README} -eq 1 ]; then
-    mv "${TEMP_DIR}/readme_backup" "${TARGET_DIR}/README.md"
+    cp "${TEMP_DIR}/readme_backup" "${TARGET_DIR}/README.md"
 fi
 
 # 清理
