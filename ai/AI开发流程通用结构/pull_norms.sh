@@ -9,6 +9,8 @@
 set -e
 
 REPO_URL="https://github.com/742366981/PythonDocument"
+# 国内加速镜像（如需）
+# REPO_URL="https://ghproxy.com/https://github.com/742366981/PythonDocument"
 BRANCH="master"
 
 echo "正在拉取规范体系..."
