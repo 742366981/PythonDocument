@@ -47,6 +47,7 @@ for item in "${SOURCE_DIR}"/*; do
         # 目录：整体覆盖，特殊处理 tools/
         if [ "${item_name}" = "tools" ]; then
             # tools 目录：只覆盖已存在的文件，不删除新增的
+            mkdir -p "${item_name}"
             for sub_item in "${item}"/*; do
                 sub_name=$(basename "${sub_item}")
                 if [ -f "${item_name}/${sub_name}" ]; then
