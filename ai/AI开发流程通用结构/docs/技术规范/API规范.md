@@ -196,24 +196,46 @@ def api_page(records, page_no, page_size, total_count):
 
 ## 3. API路径规范（强制）
 
-### 3.1 路径规范（强制）
+### 3.1 接口前缀规范（强制）
+
+**所有接口必须使用项目英文标识作为前缀**，与数据库表前缀保持一致：
+
+| 前缀类型 | 格式 | 示例 |
+|:---------|:-----|:-----|
+| 业务接口 | `/{项目前缀}/{模块}/{操作}` | `/ec/order/list` |
+| 基础数据接口 | `/{项目前缀}/base_data/{表名}` | `/ec/base_data/order_status` |
+
+> ⚠️ **项目英文标识** 与数据库表前缀保持一致，参考 `数据库规范.md` 第5.2节前缀选择建议
+
+**前缀选择示例**：
+
+| 项目类型 | 项目英文标识 | 接口示例 |
+|:---------|:------------|:---------|
+| 电商订单 | `ec` | `GET /ec/order/list` |
+| 成本计算器 | `cbjsq` | `GET /cbjsq/product/list` |
+| 客户管理 | `crm` | `GET /crm/customer/list` |
+| 乙方外包项目 | `proj_{甲方简写}` | `GET /proj_acme/order/list` |
+
+### 3.2 路径规范（强制）
+
+**在接口前缀之后，路径按以下规则命名**：
 
 | 类型 | 规则 | 示例 |
 |:-----|:-----|:-----|
 | URL路径 | 中横线分隔 | /exchange-rate |
-| 列表接口 | /list | /user/list |
-| 详情接口 | /detail | /user/detail |
-| 创建接口 | /create | POST /user/create |
-| 更新接口 | /update | POST /user/update |
-| 状态修改 | /update-status | POST /user/update-status |
-| 删除接口 | /delete | POST /user/delete |
-| 批量删除 | /batch-delete | POST /user/batch-delete |
-| 导入接口 | /import | POST /user/import |
-| 导出接口 | /export | GET /user/export |
-| 模板下载 | /template/download | GET /user/template/download |
-| 下拉接口 | /dict/{dict_type} | GET /user/dict/status |
+| 列表接口 | /list | /ec/order/list |
+| 详情接口 | /detail | /ec/order/detail |
+| 创建接口 | /create | POST /ec/order/create |
+| 更新接口 | /update | POST /ec/order/update |
+| 状态修改 | /update-status | POST /ec/order/update-status |
+| 删除接口 | /delete | POST /ec/order/delete |
+| 批量删除 | /batch-delete | POST /ec/order/batch-delete |
+| 导入接口 | /import | POST /ec/order/import |
+| 导出接口 | /export | GET /ec/order/export |
+| 模板下载 | /template/download | GET /ec/order/template/download |
+| 下拉接口 | /dict/{dict_type} | GET /ec/base_data/order_status |
 
-### 3.2 下拉接口响应格式（强制）
+### 3.3 下拉接口响应格式（强制）
 
 统一返回完整字典对象：
 
