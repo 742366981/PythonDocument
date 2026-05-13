@@ -1,10 +1,11 @@
 #!/bin/bash
-# 拉取规范体系并覆盖到当前目录
+# 拉取规范体系并合并到当前目录
 # 用法: bash pull_norms.sh
 # 规则：
-#   - 拉取到临时目录后合并到当前目录
-#   - .gitignore 和 README.md 存在时不覆盖
-#   - 不拉取 pull_norms.sh 和 pull_norms.bat 本身
+#   - 拉取到临时目录后，基于文件逐个判断是否覆盖
+#   - 目标文件已存在：不覆盖（跳过）
+#   - 目标文件不存在：创建
+#   - .gitignore、README.md 即使存在也不覆盖
 
 set -e
 
@@ -15,7 +16,6 @@ echo "正在拉取规范体系..."
 
 # 创建临时目录
 TEMP_DIR=$(mktemp -d)
-WORK_DIR="${TEMP_DIR}/work"
 
 # 下载 tarball
 echo "下载中..."
@@ -34,82 +34,59 @@ if [ ! -d "${SOURCE_DIR}" ]; then
     exit 1
 fi
 
-# 复制内容到工作目录（排除脚本本身）
-echo "准备文件..."
-mkdir -p "${WORK_DIR}"
+echo "合并到当前目录..."
 
+# 遍历源目录内容
 for item in "${SOURCE_DIR}"/*; do
     item_name=$(basename "${item}")
 
-    # 不拉取脚本本身
+    # 不处理脚本本身
     if [ "${item_name}" = "pull_norms.sh" ] || [ "${item_name}" = "pull_norms.bat" ]; then
         continue
     fi
 
     if [ -d "${item}" ]; then
-        cp -r "${item}" "${WORK_DIR}/"
-    else
-        cp "${item}" "${WORK_DIR}/"
-    fi
-done
-
-# 备份当前的 .gitignore 和 README.md（如存在）
-SKIP_GITIGNORE=0
-SKIP_README=0
-
-if [ -f ".gitignore" ]; then
-    cp .gitignore "${TEMP_DIR}/gitignore_backup"
-    SKIP_GITIGNORE=1
-fi
-
-if [ -f "README.md" ]; then
-    cp README.md "${TEMP_DIR}/readme_backup"
-    SKIP_README=1
-fi
-
-# 备份当前的 tools 目录（如存在）
-SKIP_TOOLS=0
-if [ -d "tools" ]; then
-    cp -r tools "${TEMP_DIR}/tools_backup"
-    SKIP_TOOLS=1
-fi
-
-# 合并到当前目录
-echo "合并到当前目录..."
-
-for item in "${WORK_DIR}"/*; do
-    item_name=$(basename "${item}")
-
-    if [ -d "${item}" ]; then
-        # 目录：合并内容
-        if [ -d "${item_name}" ]; then
-            cp -r "${item}"/* "${item_name}/"
-        else
+        # 目录：逐个文件处理
+        if [ ! -d "${item_name}" ]; then
+            # 目标目录不存在，直接创建
             cp -r "${item}" .
+            echo "  + ${item_name}/ (新建)"
+        else
+            # 目标目录已存在，只复制不覆盖已存在的文件
+            for sub_item in "${item}"/*; do
+                sub_name=$(basename "${sub_item}")
+                if [ -f "${sub_item}" ]; then
+                    if [ ! -f "${item_name}/${sub_name}" ]; then
+                        cp "${sub_item}" "${item_name}/"
+                        echo "  + ${item_name}/${sub_name}"
+                    fi
+                elif [ -d "${sub_item}" ]; then
+                    if [ ! -d "${item_name}/${sub_name}" ]; then
+                        cp -r "${sub_item}" "${item_name}/"
+                        echo "  + ${item_name}/${sub_name}/ (新建)"
+                    fi
+                fi
+            done
         fi
     else
-        # 文件：直接覆盖
-        cp "${item}" .
+        # 文件：判断是否覆盖
+        if [ -f "${item_name}" ]; then
+            # 文件已存在
+            if [ "${item_name}" = ".gitignore" ] || [ "${item_name}" = "README.md" ]; then
+                echo "  = ${item_name} (跳过，不覆盖)"
+            else
+                cp "${item}" "${item_name}"
+                echo "  ~ ${item_name} (覆盖)"
+            fi
+        else
+            # 文件不存在，直接创建
+            cp "${item}" .
+            echo "  + ${item_name} (新建)"
+        fi
     fi
 done
-
-# 恢复备份的文件
-if [ ${SKIP_GITIGNORE} -eq 1 ]; then
-    cp "${TEMP_DIR}/gitignore_backup" ./.gitignore
-    echo "  - .gitignore 已恢复"
-fi
-
-if [ ${SKIP_README} -eq 1 ]; then
-    cp "${TEMP_DIR}/readme_backup" ./README.md
-    echo "  - README.md 已恢复"
-fi
-
-if [ ${SKIP_TOOLS} -eq 1 ]; then
-    cp -r "${TEMP_DIR}/tools_backup" ./tools
-    echo "  - tools/ 已恢复"
-fi
 
 # 清理临时目录
 rm -rf "${TEMP_DIR}"
 
-echo "完成！规范体系已更新"
+echo "完成！规范体系已合并到当前目录"

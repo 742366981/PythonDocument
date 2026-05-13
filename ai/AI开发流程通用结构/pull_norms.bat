@@ -1,9 +1,11 @@
 @echo off
-:: 拉取规范体系并覆盖到当前目录
+:: 拉取规范体系并合并到当前目录
 :: 用法: 双击运行 或 cmd /c pull_norms.bat
 :: 规则：
-::   - .gitignore 和 README.md 存在时不覆盖
-::   - 不拉取 pull_norms.bat 和 pull_norms.sh 本身
+::   - 拉取到临时目录后，基于文件逐个判断是否覆盖
+::   - 目标文件已存在：不覆盖（跳过）
+::   - 目标文件不存在：创建
+::   - .gitignore、README.md 即使存在也不覆盖
 
 set REPO_URL=https://github.com/742366981/PythonDocument
 set BRANCH=master
@@ -13,8 +15,6 @@ echo 正在拉取规范体系...
 :: 创建临时目录
 set TEMP_DIR=%TEMP%\pull_norms_%RANDOM%
 mkdir %TEMP_DIR% 2>nul
-set WORK_DIR=%TEMP_DIR%\work
-mkdir %WORK_DIR% 2>nul
 
 :: 下载 tarball
 echo 下载中...
@@ -40,85 +40,107 @@ if not exist "%SOURCE_DIR%" (
     exit /b 1
 )
 
-:: 备份 .gitignore 和 README.md（如存在）
-set SKIP_GITIGNORE=0
-set SKIP_README=0
+echo 合并到当前目录...
 
-if exist ".gitignore" (
-    copy ".gitignore" "%TEMP_DIR%\gitignore_backup" >nul
-    set SKIP_GITIGNORE=1
-)
-
-if exist "README.md" (
-    copy "README.md" "%TEMP_DIR%\readme_backup" >nul
-    set SKIP_README=1
-)
-
-:: 备份 tools 目录（如存在）
-set SKIP_TOOLS=0
-if exist "tools" (
-    xcopy /E /I /Y "tools" "%TEMP_DIR%\tools_backup" >nul
-    set SKIP_TOOLS=1
-)
-
-:: 复制内容到工作目录（排除脚本本身）
-echo 准备文件...
+:: 遍历源目录内容
 for /d %%i in ("%SOURCE_DIR%\*") do (
     set ITEM_NAME=%%~nxi
-    if not "!ITEM_NAME!"=="pull_norms.bat" if not "!ITEM_NAME!"=="pull_norms.sh" (
-        xcopy /E /I /Y "%%i" "%WORK_DIR%\%%~nxi" >nul
-    )
-)
-for %%i in ("%SOURCE_DIR%\*.md") do (
-    xcopy /Y "%%i" "%WORK_DIR%\" >nul
-)
-for %%i in ("%SOURCE_DIR%\*.txt") do (
-    xcopy /Y "%%i" "%WORK_DIR%\" >nul
-)
-for %%i in ("%SOURCE_DIR%\*.json") do (
-    xcopy /Y "%%i" "%WORK_DIR%\" >nul
-)
-for %%i in ("%SOURCE_DIR%\AGENTS.*") do (
-    xcopy /Y "%%i" "%WORK_DIR%\" >nul
-)
-for %%i in ("%SOURCE_DIR%\CLAUDE.*") do (
-    xcopy /Y "%%i" "%WORK_DIR%\" >nul
-)
 
-:: 合并到当前目录
-echo 合并到当前目录...
-for /d %%i in ("%WORK_DIR%\*") do (
-    set ITEM_NAME=%%~nxi
+    :: 跳过脚本本身
+    if "!ITEM_NAME!"=="pull_norms.sh" goto :skip_item
+    if "!ITEM_NAME!"=="pull_norms.bat" goto :skip_item
+
     if exist "!ITEM_NAME!" (
-        xcopy /E /I /Y "%%i" "!ITEM_NAME!\" >nul
+        :: 目标目录已存在，只复制不覆盖已存在的文件
+        for /d %%j in ("%%i\*") do (
+            set SUB_NAME=%%~nj
+            if not exist "!ITEM_NAME!\%%~nj" (
+                xcopy /E /I /Y "%%j" "!ITEM_NAME!\%%~nj" >nul
+                echo   + !ITEM_NAME!\%%~nj\ (新建)
+            )
+        )
+        for %%j in ("%%i\*") do (
+            set SUB_NAME=%%~nj
+            if not exist "!ITEM_NAME!\%%~nxj" (
+                copy /Y "%%j" "!ITEM_NAME!\" >nul
+                echo   + !ITEM_NAME!\%%~nxj
+            )
+        )
     ) else (
-        xcopy /E /I /Y "%%i" . >nul
+        :: 目标目录不存在，直接创建
+        xcopy /E /I /Y "%%i" "!ITEM_NAME!" >nul
+        echo   + !ITEM_NAME!\ (新建)
+    )
+
+    :skip_item
+)
+
+:: 处理文件
+for %%i in ("%SOURCE_DIR%\*.md") do (
+    set FILE_NAME=%%~nxi
+    if "%%~nxi"=="pull_norms.sh" goto :skip_file
+    if "%%~nxi"=="pull_norms.bat" goto :skip_file
+
+    if exist "%%~nxi" (
+        if "%%~nxi"==".gitignore" (
+            echo   = %%~nxi (跳过，不覆盖)
+        ) else if "%%~nxi"=="README.md" (
+            echo   = %%~nxi (跳过，不覆盖)
+        ) else (
+            copy /Y "%%i" . >nul
+            echo   ~ %%~nxi (覆盖)
+        )
+    ) else (
+        copy "%%i" . >nul
+        echo   + %%~nxi (新建)
+    )
+    :skip_file
+)
+
+for %%i in ("%SOURCE_DIR%\*.txt") do (
+    set FILE_NAME=%%~nxi
+    if exist "%%~nxi" (
+        copy /Y "%%i" . >nul
+        echo   ~ %%~nxi (覆盖)
+    ) else (
+        copy "%%i" . >nul
+        echo   + %%~nxi (新建)
     )
 )
-for %%i in ("%WORK_DIR%\*.md") do xcopy /Y "%%i" . >nul
-for %%i in ("%WORK_DIR%\*.txt") do xcopy /Y "%%i" . >nul
-for %%i in ("%WORK_DIR%\*.json") do xcopy /Y "%%i" . >nul
-for %%i in ("%WORK_DIR%\AGENTS.*") do xcopy /Y "%%i" . >nul
-for %%i in ("%WORK_DIR%\CLAUDE.*") do xcopy /Y "%%i" . >nul
 
-:: 恢复备份的文件
-if %SKIP_GITIGNORE%==1 (
-    copy "%TEMP_DIR%\gitignore_backup" ".gitignore" >nul
-    echo   - .gitignore 已恢复
+for %%i in ("%SOURCE_DIR%\*.json") do (
+    set FILE_NAME=%%~nxi
+    if exist "%%~nxi" (
+        copy /Y "%%i" . >nul
+        echo   ~ %%~nxi (覆盖)
+    ) else (
+        copy "%%i" . >nul
+        echo   + %%~nxi (新建)
+    )
 )
 
-if %SKIP_README%==1 (
-    copy "%TEMP_DIR%\readme_backup" "README.md" >nul
-    echo   - README.md 已恢复
+for %%i in ("%SOURCE_DIR%\AGENTS.*") do (
+    if exist "%%~nxi" (
+        copy /Y "%%i" . >nul
+        echo   ~ %%~nxi (覆盖)
+    ) else (
+        copy "%%i" . >nul
+        echo   + %%~nxi (新建)
+    )
 )
 
-if %SKIP_TOOLS%==1 (
-    xcopy /E /I /Y "%TEMP_DIR%\tools_backup" "tools\" >nul
-    echo   - tools/ 已恢复
+for %%i in ("%SOURCE_DIR%\CLAUDE.*") do (
+    if exist "%%~nxi" (
+        copy /Y "%%i" . >nul
+        echo   ~ %%~nxi (覆盖)
+    ) else (
+        copy "%%i" . >nul
+        echo   + %%~nxi (新建)
+    )
 )
 
 :: 清理
 rmdir /s /q "%TEMP_DIR%" 2>nul
 
-echo 完成！规范体系已更新
+echo 完成！规范体系已合并到当前目录
 pause
