@@ -12,16 +12,54 @@
 
 ## 1. 目录结构（强制）
 
+### 1.1 整体目录结构
+
 ```
 project/
 ├── apps/                              # 应用模块（蓝图）
 │   ├── __init__.py                   # 应用工厂、蓝图注册
-│   ├── auth/                          # 示例：认证模块
-│   │   ├── __init__.py
-│   │   └── views.py
-│   ├── user/                          # 示例：用户模块
-│   ├── role/                          # 示例：角色模块
-│   └── xxx/                           # 其他业务模块...
+│   │
+│   ├── system/                        # 系统管理模块
+│   │   ├── __init__.py               # 蓝图注册
+│   │   ├── auth/                      # 认证子模块（登录、退出、Token刷新）
+│   │   │   ├── __init__.py
+│   │   │   └── views.py
+│   │   ├── user/                      # 用户子模块（用户CRUD、状态管理）
+│   │   │   ├── __init__.py
+│   │   │   └── views.py
+│   │   ├── role/                      # 角色子模块（角色CRUD、角色分配）
+│   │   │   ├── __init__.py
+│   │   │   └── views.py
+│   │   ├── permission/                # 权限子模块（权限项CRUD、权限分配）
+│   │   │   ├── __init__.py
+│   │   │   └── views.py
+│   │   ├── menu/                      # 菜单子模块（菜单CRUD、菜单树）
+│   │   │   ├── __init__.py
+│   │   │   └── views.py
+│   │   └── dict/                      # 字典子模块（字典类型、字典项）
+│   │       ├── __init__.py
+│   │       └── views.py
+│   │
+│   ├── operation/                      # 运营管理模块
+│   │   ├── __init__.py               # 蓝图注册
+│   │   └── log/                       # 日志子模块（操作日志、登录日志）
+│   │       ├── __init__.py
+│   │       └── views.py
+│   │
+│   ├── file/                          # 文件管理模块
+│   │   ├── __init__.py               # 蓝图注册
+│   │   └── upload/                    # 上传子模块（通用文件上传）
+│   │       ├── __init__.py
+│   │       └── views.py
+│   │
+│   └── business/                       # 业务模块（按需创建）
+│       ├── __init__.py               # 蓝图注册
+│       ├── order/                     # 订单模块
+│       │   ├── __init__.py
+│       │   └── views.py
+│       └── product/                   # 商品模块
+│           ├── __init__.py
+│           └── views.py
 │
 ├── common/                             # 公共模块
 │   ├── __init__.py
@@ -74,6 +112,121 @@ project/
 ├── gunicorn_loader.py                  # Gunicorn启动器
 └── Dockerfile                          # Docker镜像
 ```
+
+### 1.2 模块划分规范
+
+| 模块层级 | 模块名 | 说明 | 是否必须 |
+|:---------|:-------|:-----|:--------|
+| 一级 | `system/` | 系统管理：用户、角色、权限、菜单、字典、认证 | 必须 |
+| 一级 | `operation/` | 运营管理：日志、监控 | 必须 |
+| 一级 | `file/` | 文件管理：上传、附件 | 必须 |
+| 一级 | `business/` | 业务模块：订单、商品等 | 按需扩展 |
+
+### 1.3 子模块划分规范
+
+**system/ 系统管理模块的子模块**：
+
+| 子模块 | 职责 | 接口示例 |
+|:-------|:-----|:---------|
+| `auth/` | 认证管理 | 登录、退出、Token刷新、验证码 |
+| `user/` | 用户管理 | 用户CRUD、状态管理、个人信息 |
+| `role/` | 角色管理 | 角色CRUD、角色分配 |
+| `permission/` | 权限管理 | 权限项CRUD、权限分配 |
+| `menu/` | 菜单管理 | 菜单CRUD、菜单树 |
+| `dict/` | 字典管理 | 字典类型CRUD、字典项CRUD |
+
+**operation/ 运营管理模块的子模块**：
+
+| 子模块 | 职责 | 接口示例 |
+|:-------|:-----|:---------|
+| `log/` | 日志管理 | 操作日志、登录日志、异常日志 |
+| `monitor/` | 监控管理 | 在线用户、访问统计 |
+
+**file/ 文件管理模块的子模块**：
+
+| 子模块 | 职责 | 接口示例 |
+|:-------|:-----|:---------|
+| `upload/` | 文件上传 | 通用文件上传、图片上传 |
+| `attachment/` | 附件管理 | 附件列表、附件删除 |
+
+### 1.4 蓝图注册规范
+
+```python
+# apps/__init__.py
+
+def register_blueprints(app):
+    url_prefix = '/api'
+
+    # system 模块
+    from apps.system.auth.views import auth_bp
+    from apps.system.user.views import user_bp
+    from apps.system.role.views import role_bp
+    from apps.system.permission.views import permission_bp
+    from apps.system.menu.views import menu_bp
+    from apps.system.dict.views import dict_bp
+
+    app.register_blueprint(auth_bp, url_prefix=f'{url_prefix}/auth')
+    app.register_blueprint(user_bp, url_prefix=f'{url_prefix}/user')
+    app.register_blueprint(role_bp, url_prefix=f'{url_prefix}/role')
+    app.register_blueprint(permission_bp, url_prefix=f'{url_prefix}/permission')
+    app.register_blueprint(menu_bp, url_prefix=f'{url_prefix}/menu')
+    app.register_blueprint(dict_bp, url_prefix=f'{url_prefix}/dict')
+
+    # operation 模块
+    from apps.operation.log.views import log_bp
+    app.register_blueprint(log_bp, url_prefix=f'{url_prefix}/log')
+
+    # file 模块
+    from apps.file.upload.views import upload_bp
+    app.register_blueprint(upload_bp, url_prefix=f'{url_prefix}/upload')
+
+    # business 模块（按需注册）
+    # from apps.business.order.views import order_bp
+    # app.register_blueprint(order_bp, url_prefix=f'{url_prefix}/order')
+```
+
+### 1.5 视图文件拆分规范（强制）
+
+#### 1.5.1 拆分条件
+
+满足以下任一条件时，必须拆分文件：
+
+| 条件 | 阈值 | 说明 |
+|:-----|:-----|:-----|
+| 单文件接口数 | > 10 个 | 必须拆分 |
+| 单文件行数 | > 500 行 | 含注释和空行 |
+
+#### 1.5.2 拆分原则
+
+**按业务子模块拆分，不按接口类型拆分**：
+
+```
+# ❌ 错误：按接口类型拆分
+apps/user/list_view.py      # 所有 list 接口
+apps/user/create_view.py   # 所有 create 接口
+
+# ✅ 正确：按业务子模块拆分
+apps/user/user_view.py     # 用户基础 CRUD
+apps/user/address_view.py  # 用户地址相关
+apps/user/profile_view.py # 用户资料相关
+```
+
+#### 1.5.3 拆分后命名规范
+
+| 场景 | 命名规则 | 示例 |
+|:-----|:---------|:-----|
+| 子模块接口少 | `{module}_view.py` | `user_view.py` |
+| 子模块接口多 | `{module}_{sub}_view.py` | `user_address_view.py` |
+| 继续拆分 | `{module}_{sub}_{func}_view.py` | `user_address_list_view.py` |
+
+#### 1.5.4 拆分检查清单
+
+| 检查项 | 要求 |
+|:-------|:-----|
+| 单文件接口数 | ≤ 10 |
+| 单文件行数 | ≤ 500 |
+| 拆分方式 | 按业务拆分，不按接口类型 |
+| 命名规范 | 符合 1.5.3 命名规则 |
 
 ---
 
