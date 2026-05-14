@@ -9,10 +9,6 @@
 set -e
 
 REPO_URL="https://githubfast.com/742366981/PythonDocument"
-# 国内加速镜像（如需）
-# REPO_URL="https://ghproxy.com/https://github.com/742366981/PythonDocument"
-# REPO_URL="https://gitclone.com/github.com/742366981/PythonDocument"
-# REPO_URL="https://hub.fastgit.xyz"
 BRANCH="master"
 
 # 创建临时目录
