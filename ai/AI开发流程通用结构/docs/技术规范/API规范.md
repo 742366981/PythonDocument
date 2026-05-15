@@ -231,7 +231,7 @@ def api_page(records, page_no, page_size, total_count):
 | 导入接口 | `/import` | `POST /{前缀}/order/import` |
 | 导出接口 | `/export` | `GET /{前缀}/order/export` |
 | 模板下载 | `/template/download` | `GET /{前缀}/order/template/download` |
-| 下拉接口 | `/dict/{dict_type}` | `GET /{前缀}/dict/order_status` |
+| 下拉接口 | `/dict?type={类型}` | `GET /{前缀}/order/dict?type=status` |
 
 ### 3.3 下拉接口响应格式（强制）
 
