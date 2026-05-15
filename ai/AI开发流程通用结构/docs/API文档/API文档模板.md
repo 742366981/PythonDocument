@@ -1,7 +1,7 @@
 # API 文档通用模板
 
 **版本**: 1.0.0
-**更新日期**: 2026-05-07
+**更新日期**: 2026-05-15
 
 ---
 
@@ -13,10 +13,13 @@
   - [GET 详情接口](#get-详情接口)
   - [POST 创建接口](#post-创建接口)
   - [POST 更新接口](#post-更新接口)
+  - [POST 状态修改接口](#post-状态修改接口)
   - [POST 删除接口](#post-删除接口)
   - [POST 批量删除接口](#post-批量删除接口)
-  - [POST 状态修改接口](#post-状态修改接口)
-  - [GET 数据字典接口](#get-数据字典接口)
+  - [POST 导入接口](#post-导入接口)
+  - [GET 导出接口](#get-导出接口)
+  - [GET 模板下载接口](#get-模板下载接口)
+  - [GET 下拉接口](#get-下拉接口)
   - [POST 登录接口](#post-登录接口)
   - [POST 登出接口](#post-登出接口)
 
@@ -27,7 +30,7 @@
 ### 基础路径
 
 ```
-http://{host}:{port}/sso
+http://{host}:{port}/{项目前缀}
 ```
 
 ### 认证方式
@@ -36,7 +39,7 @@ http://{host}:{port}/sso
 
 #### 1. 获取 Token
 
-**接口地址**: `POST /sso/auth/login`
+**接口地址**: `POST /{项目前缀}/auth/login`
 
 **请求参数**:
 
@@ -99,19 +102,44 @@ Authorization: Bearer {token}
 
 ---
 
-### 业务错误码
+### 接口字段规范
 
-| 业务错误码 | 说明 | 错误信息示例 |
-|:------:|:-----|:------------|
-| 10001 | 用户不存在 | 用户不存在 |
-| 10002 | 用户已禁用 | 用户已禁用 |
-| 10003 | 密码错误 | 密码错误，剩余N次机会 |
-| 10004 | 登录失败次数过多 | 登录失败次数过多，账户已锁定 |
-| 10005 | 旧密码错误 | 旧密码错误 |
-| 20001 | 角色不存在 | 角色不存在 |
-| 20002 | 角色已存在 | 角色已存在 |
-| 30001 | 用户角色关联已存在 | 用户角色关联已存在 |
-| 30002 | 用户角色关联不存在 | 用户角色关联不存在 |
+#### 列表接口返回规范
+
+| 场景 | 返回格式 | 示例 |
+|:-----|:---------|:-----|
+| 查询本表数据 | 返回本表字段（包含主键 id） | `{"id": 1, "name": "管理员"}` |
+| 需展示关联信息 | 本表字段 + 关联表的 id+name | `{"id": 1, "role_id": 1, "role_name": "管理员"}` |
+
+#### 详情接口返回规范
+
+详情接口请求只需 `id`，返回本表字段 + 业务需要的关联字段：
+
+| 场景 | 返回格式 | 示例 |
+|:-----|:---------|:-----|
+| 本表字段 | 本表所有字段 | `{"id": 1, "username": "admin", "balance": 100}` |
+| 需展示关联信息 | 本表字段 + 关联表的 id+name | `{"id": 1, "role_id": 1, "role_name": "管理员"}` |
+
+#### 创建/更新接口参数规范
+
+| 接口类型 | 接收参数 | 示例 |
+|:---------|:---------|:-----|
+| 创建本表 | 本表字段（除自增 id） | `{"name": "管理员", "status": 1}` |
+| 更新本表 | 本表 id + 要更新的字段 | `{"id": 1, "name": "新名称"}` |
+| 创建/更新关联表 | 关联 id 字段 | `{"user_id": 1, "role_id": 2}` |
+
+#### 删除接口参数规范
+
+| 接口类型 | 接收参数 | 示例 |
+|:---------|:---------|:-----|
+| 删除本表（单个） | 本表 id | `{"id": 1}` |
+| 删除本表（批量） | 本表 id 数组 | `{"ids": [1, 2, 3]}` |
+
+---
+
+### 导入导出字段规范
+
+> 详见 `docs/技术规范/导入导出规范.md` 第1章
 
 ---
 
@@ -123,7 +151,7 @@ Authorization: Bearer {token}
 
 ### GET 列表接口
 
-**接口地址**: `GET /{module}/list`
+**接口地址**: `GET /{前缀}/{模块}/list`
 
 **需认证**: 是
 
@@ -164,6 +192,9 @@ Authorization: Bearer {token}
 |:-----|:-----|:-----|
 | id | integer | 记录ID |
 | name | string | 名称 |
+| code | string | 编码 |
+| role_id | integer | 关联角色ID（按业务需要） |
+| role_name | string | 关联角色名称（按业务需要） |
 | status | integer | 状态（0禁用/1启用） |
 | create_time | string | 创建时间 |
 
@@ -177,9 +208,12 @@ Authorization: Bearer {token}
     "records": [
       {
         "id": 1,
-        "name": "示例",
+        "name": "管理员",
+        "code": "ADMIN",
+        "role_id": 1,
+        "role_name": "超级管理员",
         "status": 1,
-        "create_time": "2026-05-07 10:00:00"
+        "create_time": "2026-05-15 10:00:00"
       }
     ],
     "total_count": 50,
@@ -193,7 +227,7 @@ Authorization: Bearer {token}
 
 ### GET 详情接口
 
-**接口地址**: `GET /{module}/detail`
+**接口地址**: `GET /{前缀}/{模块}/detail`
 
 **需认证**: 是
 
@@ -221,6 +255,9 @@ Authorization: Bearer {token}
 |:-----|:-----|:-----|
 | id | integer | 记录ID |
 | name | string | 名称 |
+| code | string | 编码 |
+| role_id | integer | 关联角色ID（按业务需要） |
+| role_name | string | 关联角色名称（按业务需要） |
 | status | integer | 状态（0禁用/1启用） |
 | create_time | string | 创建时间 |
 | update_time | string | 更新时间 |
@@ -231,10 +268,13 @@ Authorization: Bearer {token}
   "code": 0,
   "data": {
     "id": 1,
-    "name": "示例",
+    "name": "管理员",
+    "code": "ADMIN",
+    "role_id": 1,
+    "role_name": "超级管理员",
     "status": 1,
-    "create_time": "2026-05-07 10:00:00",
-    "update_time": "2026-05-07 10:00:00"
+    "create_time": "2026-05-15 10:00:00",
+    "update_time": "2026-05-15 10:00:00"
   },
   "msg": "success"
 }
@@ -244,7 +284,7 @@ Authorization: Bearer {token}
 
 ### POST 创建接口
 
-**接口地址**: `POST /{module}/create`
+**接口地址**: `POST /{前缀}/{模块}/create`
 
 **需认证**: 是
 
@@ -254,16 +294,18 @@ Authorization: Bearer {token}
 
 | 参数名 | 类型 | 必填 | 说明 |
 |:------|:----:|:----:|------|
-| name | string | 是 | 名称（示例: 示例名称） |
-| code | string | 是 | 编码（示例: CODE001） |
+| name | string | 是 | 名称（示例: 管理员） |
+| code | string | 是 | 编码（示例: ADMIN） |
+| role_id | integer | 否 | 关联角色ID（示例: 1） |
 | status | integer | 否 | 状态（0禁用/1启用）（示例: 1） |
 | description | string | 否 | 描述（示例: 这是一个描述） |
 
 **请求示例**:
 ```json
 {
-  "name": "示例名称",
-  "code": "CODE001",
+  "name": "管理员",
+  "code": "ADMIN",
+  "role_id": 1,
   "status": 1,
   "description": "这是一个描述"
 }
@@ -300,7 +342,7 @@ Authorization: Bearer {token}
 
 ### POST 更新接口
 
-**接口地址**: `POST /{module}/update`
+**接口地址**: `POST /{前缀}/{模块}/update`
 
 **需认证**: 是
 
@@ -311,7 +353,9 @@ Authorization: Bearer {token}
 | 参数名 | 类型 | 必填 | 说明 |
 |:------|:----:|:----:|------|
 | id | integer | 是 | 记录ID（示例: 1） |
-| name | string | 否 | 名称（示例: 新名称） |
+| name | string | 否 | 名称（示例: 新管理员） |
+| code | string | 否 | 编码（示例: ADMIN_NEW） |
+| role_id | integer | 否 | 关联角色ID（示例: 1） |
 | status | integer | 否 | 状态（0禁用/1启用）（示例: 1） |
 | description | string | 否 | 描述（示例: 更新后的描述） |
 
@@ -319,7 +363,9 @@ Authorization: Bearer {token}
 ```json
 {
   "id": 1,
-  "name": "新名称",
+  "name": "新管理员",
+  "code": "ADMIN_NEW",
+  "role_id": 1,
   "status": 1,
   "description": "更新后的描述"
 }
@@ -344,89 +390,9 @@ Authorization: Bearer {token}
 
 ---
 
-### POST 删除接口
-
-**接口地址**: `POST /{module}/delete`
-
-**需认证**: 是
-
-**说明**: 删除记录（软删除），删除前检查关联数据。
-
-**请求参数**:
-
-| 参数名 | 类型 | 必填 | 说明 |
-|:------|:----:|:----:|------|
-| id | integer | 是 | 记录ID（示例: 1） |
-
-**请求示例**:
-```json
-{
-  "id": 1
-}
-```
-
-**响应说明**: 删除成功
-
-**响应参数**:
-
-| 字段 | 类型 | 说明 |
-|:-----|:-----|:-----|
-| code | integer | 状态码 |
-| msg | string | 消息 |
-
-**响应示例**:
-```json
-{
-  "code": 0,
-  "msg": "删除成功"
-}
-```
-
----
-
-### POST 批量删除接口
-
-**接口地址**: `POST /{module}/batch-delete`
-
-**需认证**: 是
-
-**说明**: 批量删除记录。
-
-**请求参数**:
-
-| 参数名 | 类型 | 必填 | 说明 |
-|:------|:----:|:----:|------|
-| ids | array | 是 | 记录ID列表（示例: [1, 2, 3]） |
-
-**请求示例**:
-```json
-{
-  "ids": [1, 2, 3]
-}
-```
-
-**响应说明**: 删除成功
-
-**响应参数**:
-
-| 字段 | 类型 | 说明 |
-|:-----|:-----|:-----|
-| code | integer | 状态码 |
-| msg | string | 消息 |
-
-**响应示例**:
-```json
-{
-  "code": 0,
-  "msg": "删除成功"
-}
-```
-
----
-
 ### POST 状态修改接口
 
-**接口地址**: `POST /{module}/update-status`
+**接口地址**: `POST /{前缀}/{模块}/update-status`
 
 **需认证**: 是
 
@@ -466,15 +432,203 @@ Authorization: Bearer {token}
 
 ---
 
-### GET 数据字典接口
+### POST 删除接口
 
-**接口地址**: `GET /{module}/dict`
+**接口地址**: `POST /{前缀}/{模块}/delete`
+
+**需认证**: 是
+
+**说明**: 删除记录（软删除），删除前检查关联数据。
+
+**请求参数**:
+
+| 参数名 | 类型 | 必填 | 说明 |
+|:------|:----:|:----:|------|
+| id | integer | 是 | 记录ID（示例: 1） |
+
+**请求示例**:
+```json
+{
+  "id": 1
+}
+```
+
+**响应说明**: 删除成功
+
+**响应参数**:
+
+| 字段 | 类型 | 说明 |
+|:-----|:-----|:-----|
+| code | integer | 状态码 |
+| msg | string | 消息 |
+
+**响应示例**:
+```json
+{
+  "code": 0,
+  "msg": "删除成功"
+}
+```
+
+---
+
+### POST 批量删除接口
+
+**接口地址**: `POST /{前缀}/{模块}/batch-delete`
+
+**需认证**: 是
+
+**说明**: 批量删除记录。
+
+**请求参数**:
+
+| 参数名 | 类型 | 必填 | 说明 |
+|:------|:----:|:----:|------|
+| ids | array | 是 | 记录ID列表（示例: [1, 2, 3]） |
+
+**请求示例**:
+```json
+{
+  "ids": [1, 2, 3]
+}
+```
+
+**响应说明**: 删除成功
+
+**响应参数**:
+
+| 字段 | 类型 | 说明 |
+|:-----|:-----|:-----|
+| code | integer | 状态码 |
+| msg | string | 消息 |
+
+**响应示例**:
+```json
+{
+  "code": 0,
+  "msg": "删除成功"
+}
+```
+
+---
+
+### POST 导入接口
+
+**接口地址**: `POST /{前缀}/{模块}/import`
+
+**需认证**: 是
+
+**说明**: 通过 Excel 文件导入数据，支持批量新增。
+
+**请求参数**:
+
+| 参数名 | 位置 | 类型 | 必填 | 说明 |
+|:------|:----:|:----:|:----:|------|
+| file | formData | file | 是 | Excel文件(.xlsx/.csv) |
+
+**响应说明**: 导入结果
+
+**响应参数**:
+
+| 字段 | 类型 | 说明 |
+|:-----|:-----|:-----|
+| code | integer | 状态码 |
+| data | object | 数据对象 |
+| msg | string | 消息 |
+
+**data 响应参数**:
+
+| 字段 | 类型 | 说明 |
+|:-----|:-----|:-----|
+| total | integer | 总处理数 |
+| success | integer | 成功数 |
+| fail | integer | 失败数 |
+| errors | array | 错误详情列表（最多10条） |
+
+**errors 字段说明**:
+
+| 字段 | 类型 | 说明 |
+|:-----|:-----|:-----|
+| row | integer | 失败行号 |
+| message | string | 错误原因 |
+
+**响应示例**:
+```json
+{
+  "code": 0,
+  "data": {
+    "total": 100,
+    "success": 98,
+    "fail": 2,
+    "errors": [
+      {"row": 3, "message": "第4行角色编码不存在"},
+      {"row": 5, "message": "第6行名称不能为空"}
+    ]
+  },
+  "msg": "导入完成"
+}
+```
+
+---
+
+### GET 导出接口
+
+**接口地址**: `GET /{前缀}/{模块}/export`
+
+**需认证**: 是
+
+**说明**: 导出数据为 Excel 文件。
+
+**请求参数**:
+
+| 参数名 | 位置 | 类型 | 必填 | 说明 |
+|:------|:----:|:----:|:----:|------|
+| keyword | query | string | 否 | 关键词（模糊搜索） |
+| status | query | integer | 否 | 状态（0禁用/1启用） |
+
+**响应说明**: Excel 文件流
+
+**响应示例**:
+```
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+Content-Disposition: attachment; filename={模块}_export_20260515.xlsx
+```
+
+---
+
+### GET 模板下载接口
+
+**接口地址**: `GET /{前缀}/{模块}/template/download`
+
+**需认证**: 是
+
+**说明**: 下载 Excel 导入模板。
+
+**请求参数**: 无
+
+**响应说明**: Excel 文件流
+
+**响应示例**:
+```
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+Content-Disposition: attachment; filename={模块}_template.xlsx
+```
+
+---
+
+### GET 下拉接口
+
+**接口地址**: `GET /{前缀}/{模块}/dict`
 
 **需认证**: 是
 
 **说明**: 获取启用的数据字典列表，用于下拉选项。
 
-**请求参数**: 无
+**请求参数**:
+
+| 参数名 | 位置 | 类型 | 必填 | 说明 |
+|:------|:----:|:----:|:----:|------|
+| type | query | string | 是 | 字典类型（示例: status） |
 
 **响应说明**: 查询成功
 
@@ -490,8 +644,16 @@ Authorization: Bearer {token}
 
 | 字段 | 类型 | 说明 |
 |:-----|:-----|:-----|
-| value | integer | 值 |
-| label | string | 标签 |
+| dictCode | integer | 字典编码（对应数据库id） |
+| dictLabel | string | 显示文本（对应数据库name） |
+| dictValue | string | 存储值（对应数据库code） |
+| dictType | string | 字典类型 |
+| dictSort | integer | 排序号 |
+| cssClass | string | CSS样式类 |
+| listClass | string | 列表样式类 |
+| defaultFlag | string | 默认标志 |
+| status | string | 状态 |
+| remark | string | 备注 |
 
 **响应示例**:
 ```json
@@ -499,12 +661,28 @@ Authorization: Bearer {token}
   "code": 0,
   "data": [
     {
-      "value": 1,
-      "label": "启用"
+      "dictCode": 1,
+      "dictLabel": "启用",
+      "dictValue": "1",
+      "dictType": "status",
+      "dictSort": 1,
+      "cssClass": null,
+      "listClass": null,
+      "defaultFlag": "1",
+      "status": "0",
+      "remark": null
     },
     {
-      "value": 0,
-      "label": "禁用"
+      "dictCode": 2,
+      "dictLabel": "禁用",
+      "dictValue": "0",
+      "dictType": "status",
+      "dictSort": 2,
+      "cssClass": null,
+      "listClass": null,
+      "defaultFlag": "0",
+      "status": "0",
+      "remark": null
     }
   ],
   "msg": "success"
@@ -515,11 +693,11 @@ Authorization: Bearer {token}
 
 ### POST 登录接口
 
-**接口地址**: `POST /sso/auth/login`
+**接口地址**: `POST /{前缀}/auth/login`
 
 **需认证**: 否
 
-**说明**: 使用用户名或手机号和密码登录，返回Token。密码错误5次将锁定账户30分钟。
+**说明**: 使用用户名或手机号和密码登录，返回Token。
 
 **请求参数**:
 
@@ -571,7 +749,7 @@ Authorization: Bearer {token}
 
 ### POST 登出接口
 
-**接口地址**: `POST /sso/auth/logout`
+**接口地址**: `POST /{前缀}/auth/logout`
 
 **需认证**: 是
 
@@ -606,8 +784,9 @@ Authorization: Bearer {token}
 
 ## 编写说明
 
-1. **基础路径**：根据实际部署环境修改 `{host}` 和 `{port}`
-2. **模块名称**：将 `{module}` 替换为实际的模块名（如 user、role、permission 等）
+1. **基础路径**：根据实际部署环境修改 `{host}`、`{port}` 和 `{项目前缀}`
+2. **模块名称**：将 `{模块}` 替换为实际的模块名（如 user、role、order 等）
 3. **字段定义**：根据实际业务需求增删请求参数和响应字段
-4. **示例数据**：使用有意义的示例数据，便于理解接口用途
-5. **状态码**：通用错误码 + 业务错误码结合使用
+4. **关联字段**：列表/详情接口按业务需要返回关联字段的 id+name
+5. **示例数据**：使用有意义的示例数据，便于理解接口用途
+6. **状态码**：通用错误码 + 业务错误码结合使用

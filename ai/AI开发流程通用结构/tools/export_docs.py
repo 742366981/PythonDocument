@@ -5,7 +5,9 @@
 使用方式：
     python tools/export_docs.py
 
-注意：需从项目根目录执行
+注意：
+    - 需从项目根目录执行
+    - 环境变量 ENV_TYPE 需在运行时设置，如：ENV_TYPE=dev python tools/export_docs.py
 """
 
 import os
@@ -13,12 +15,9 @@ import sys
 import json
 from datetime import datetime
 
-# 设置环境变量
-os.environ['ENV_TYPE'] = 'dev'
-
 
 def get_error_codes():
-    """返回业务错误码定义"""
+    """返回通用错误码定义"""
     return """## 错误码
 
 | 错误码 | 说明 |
@@ -30,17 +29,7 @@ def get_error_codes():
 | 404 | 资源不存在 |
 | 500 | 服务器内部错误 |
 
-| 业务错误码 | 说明 | 错误信息示例 |
-|:------:|:-----|:------------|
-| 10001 | 用户不存在 | 用户不存在 |
-| 10002 | 用户已禁用 | 用户已禁用 |
-| 10003 | 密码错误 | 密码错误，剩余N次机会 |
-| 10004 | 登录失败次数过多 | 登录失败次数过多，账户已锁定 |
-| 10005 | 旧密码错误 | 旧密码错误 |
-| 20001 | 角色不存在 | 角色不存在 |
-| 20002 | 角色已存在 | 角色已存在 |
-| 30001 | 用户角色关联已存在 | 用户角色关联已存在 |
-| 30002 | 用户角色关联不存在 | 用户角色关联不存在 |
+> **业务错误码**：业务错误码由各项目自行定义，格式为 10001+，请根据实际业务补充。
 
 """
 
@@ -50,11 +39,13 @@ def json_to_markdown(spec, output_file):
     lines = []
 
     # 文档头部
-    lines.append("# SSO用户系统 API 文档")
+    title = spec.get('info', {}).get('title', 'API 文档')
+    lines.append(f"# {title}")
     lines.append("")
     lines.append(f"**版本**: {spec.get('info', {}).get('version', '1.0.0')}")
     lines.append(f"**更新日期**: {datetime.now().strftime('%Y-%m-%d')}")
-    lines.append(f"**基础路径**: `http://{{host}}:{spec.get('port', '{{port}}')}/sso`")
+    base_path = spec.get('basePath', '/{prefix}')
+    lines.append(f"**基础路径**: `http://{{host}}:{spec.get('port', '{{port}}')}{base_path}`")
     lines.append("")
 
     # 目录
