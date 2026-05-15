@@ -34,9 +34,42 @@ def get_error_codes():
 """
 
 
-def json_to_markdown(spec, output_file):
-    """将 Swagger JSON 转换为 Markdown"""
+def find_auth_paths(spec):
+    """自动识别登录和登出接口路径"""
+    paths = spec.get('paths', {})
+    login_path = None
+    logout_path = None
+
+    for path, methods in paths.items():
+        for method, details in methods.items():
+            if method.upper() not in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']:
+                continue
+            # 识别登录接口
+            if 'login' in path.lower() and not login_path:
+                login_path = f"{method.upper()} {path}"
+            # 识别登出接口
+            if 'logout' in path.lower() and not logout_path:
+                logout_path = f"{method.upper()} {path}"
+
+    return login_path, logout_path
+
+
+def json_to_markdown(spec, output_file, login_path=None, logout_path=None):
+    """将 Swagger JSON 转换为 Markdown
+
+    Args:
+        spec: Swagger JSON 对象
+        output_file: 输出文件路径
+        login_path: 登录接口路径（如 "POST /auth/login"），自动识别时可传 None
+        logout_path: 登出接口路径（如 "POST /auth/logout"），自动识别时可传 None
+    """
     lines = []
+
+    # 自动识别登录/登出路径
+    if not login_path or not logout_path:
+        auto_login, auto_logout = find_auth_paths(spec)
+        login_path = login_path or auto_login or "POST /auth/login"
+        logout_path = logout_path or auto_logout or "POST /auth/logout"
 
     # 文档头部
     title = spec.get('info', {}).get('title', 'API 文档')
@@ -78,7 +111,7 @@ def json_to_markdown(spec, output_file):
     lines.append("")
     lines.append("#### 1. 获取 Token")
     lines.append("")
-    lines.append("**接口地址**: `POST /sso/auth/login`")
+    lines.append(f"**接口地址**: `{login_path}`")
     lines.append("")
     lines.append("**请求参数**:")
     lines.append("")
@@ -289,9 +322,12 @@ def main():
                 json.dump(spec, f, ensure_ascii=False, indent=2)
             print(f"JSON 规范已保存: {json_file}")
 
+            # 自动识别登录/登出路径
+            login_path, logout_path = find_auth_paths(spec)
+
             # 生成 Markdown
             md_file = os.path.join(project_root, 'docs', 'API文档', 'API文档.md')
-            json_to_markdown(spec, md_file)
+            json_to_markdown(spec, md_file, login_path, logout_path)
             print(f"Markdown 文档已保存: {md_file}")
 
             # 统计
