@@ -559,8 +559,8 @@ responses:
 ## GET 数据字典接口模板
 
 ```python
-@auth_bp.route('/dict/{dict_type}', methods=['GET'])
-def dict(dict_type):
+@auth_bp.route('/dict', methods=['GET'])
+def dict():
     """获取数据字典
 ---
 tags:
@@ -570,8 +570,8 @@ description: 获取指定类型的数据字典列表，用于下拉选项。
 security:
   - Bearer: []
 parameters:
-  - in: path
-    name: dict_type
+  - in: query
+    name: type
     type: string
     required: true
     description: 字典类型
