@@ -4,10 +4,6 @@
 
 使用方式：
     python tools/export_docs.py
-
-注意：
-    - 需从项目根目录执行
-    - 环境变量 ENV_TYPE 需在运行时设置，如：ENV_TYPE=dev python tools/export_docs.py
 """
 
 import os
@@ -34,6 +30,73 @@ def get_error_codes():
 """
 
 
+def build_example_from_props(props):
+    """根据 properties 构建请求示例
+
+    Args:
+        props: 属性字典
+
+    Returns:
+        示例字典
+    """
+    if not props:
+        return {}
+    ex = {}
+    for pk, pv in props.items():
+        if not isinstance(pv, dict):
+            continue
+        pv_type = pv.get('type', 'string')
+        pv_example = pv.get('example')
+        if pv_example is not None:
+            ex[pk] = pv_example
+        elif pv_type == 'string':
+            ex[pk] = ''
+        elif pv_type == 'integer' or pv_type == 'number':
+            ex[pk] = 0
+        elif pv_type == 'boolean':
+            ex[pk] = True
+        elif pv_type == 'array':
+            ex[pk] = []
+        elif pv_type == 'object':
+            ex[pk] = {}
+        else:
+            ex[pk] = ''
+    return ex
+
+
+def extract_response_data_fields(resp_props):
+    """从响应 properties 中提取 data 字段的属性
+
+    Args:
+        resp_props: 响应属性字典
+
+    Returns:
+        data 字段的属性字典，如果没有 data 字段则返回空字典
+    """
+    if 'data' in resp_props:
+        data_prop = resp_props['data']
+        if isinstance(data_prop, dict):
+            if 'properties' in data_prop:
+                return data_prop['properties']
+            return {}
+        return {}
+    return {}
+
+
+def is_pagination_response(resp_props):
+    """判断是否为分页响应
+
+    Args:
+        resp_props: 响应属性字典
+
+    Returns:
+        (bool, data字段属性字典)
+    """
+    data_props = extract_response_data_fields(resp_props)
+    pagination_fields = {'records', 'page_no', 'page_size', 'total_page', 'total_count'}
+    return all(field in data_props for field in pagination_fields), data_props
+
+
 def find_auth_paths(spec):
     """自动识别登录和登出接口路径"""
     paths = spec.get('paths', {})
@@ -54,22 +117,20 @@ def find_auth_paths(spec):
     return login_path, logout_path
 
 
-def json_to_markdown(spec, output_file, login_path=None, logout_path=None):
+def json_to_markdown(spec, output_file, login_path=None):
     """将 Swagger JSON 转换为 Markdown
 
     Args:
         spec: Swagger JSON 对象
         output_file: 输出文件路径
         login_path: 登录接口路径（如 "POST /auth/login"），自动识别时可传 None
-        logout_path: 登出接口路径（如 "POST /auth/logout"），自动识别时可传 None
     """
     lines = []
 
-    # 自动识别登录/登出路径
-    if not login_path or not logout_path:
-        auto_login, auto_logout = find_auth_paths(spec)
-        login_path = login_path or auto_login or "POST /auth/login"
-        logout_path = logout_path or auto_logout or "POST /auth/logout"
+    # 自动识别登录路径
+    if not login_path:
+        auto_login, _ = find_auth_paths(spec)
+        login_path = auto_login or "POST /auth/login"
 
     # 文档头部
     title = spec.get('info', {}).get('title', 'API 文档')
@@ -78,7 +139,7 @@ def json_to_markdown(spec, output_file, login_path=None, logout_path=None):
     lines.append(f"**版本**: {spec.get('info', {}).get('version', '1.0.0')}")
     lines.append(f"**更新日期**: {datetime.now().strftime('%Y-%m-%d')}")
     base_path = spec.get('basePath', '/{prefix}')
-    lines.append(f"**基础路径**: `http://{{host}}:{spec.get('port', '{{port}}')}{base_path}`")
+    lines.append(f"**基础路径**: `http://{{host}}:{{port}}{base_path}`")
     lines.append("")
 
     # 目录
@@ -238,11 +299,7 @@ def json_to_markdown(spec, output_file, login_path=None, logout_path=None):
                         if props:
                             lines.append("**请求示例**:")
                             lines.append("```json")
-                            ex = {}
-                            for pk, pv in props.items():
-                                if isinstance(pv, dict):
-                                    ex[pk] = pv.get('example', '' if pv.get('type') == 'string' else 0)
-                            lines.append(json.dumps(ex, ensure_ascii=False, indent=2))
+                            lines.append(json.dumps(build_example_from_props(props), ensure_ascii=False, indent=2))
                             lines.append("```")
                             lines.append("")
 
@@ -272,6 +329,42 @@ def json_to_markdown(spec, output_file, login_path=None, logout_path=None):
                         lines.append(f"| {prop_name} | {prop_type} | {prop_desc} |")
                     lines.append("")
 
+                    # 检查是否是分页响应
+                    is_page, data_props = is_pagination_response(resp_props)
+
+                    # data 响应参数（如果有 data 字段）
+                    if 'data' in resp_props and data_props:
+                        lines.append("**data 响应参数**:")
+                        lines.append("")
+                        lines.append("| 字段 | 类型 | 说明 |")
+                        lines.append("|:-----|:-----|:-----|")
+
+                        for prop_name, prop_info in data_props.items():
+                            if not isinstance(prop_info, dict):
+                                continue
+                            prop_type = prop_info.get('type', 'string')
+                            prop_desc = prop_info.get('description', '')
+                            lines.append(f"| {prop_name} | {prop_type} | {prop_desc} |")
+                        lines.append("")
+
+                        # 分页响应添加 records 字段说明
+                        if is_page and 'records' in data_props:
+                            records_info = data_props.get('records', {})
+                            if isinstance(records_info, dict) and records_info.get('type') == 'array':
+                                items = records_info.get('items', {})
+                                if isinstance(items, dict) and 'properties' in items:
+                                    lines.append("**records 字段说明**:")
+                                    lines.append("")
+                                    lines.append("| 字段 | 类型 | 说明 |")
+                                    lines.append("|:-----|:-----|:-----|")
+                                    for rec_name, rec_info in items['properties'].items():
+                                        if not isinstance(rec_info, dict):
+                                            continue
+                                        rec_type = rec_info.get('type', 'string')
+                                        rec_desc = rec_info.get('description', '')
+                                        lines.append(f"| {rec_name} | {rec_type} | {rec_desc} |")
+                                    lines.append("")
+
                 # 响应示例
                 lines.append("**响应示例**:")
                 lines.append("```json")
@@ -283,7 +376,16 @@ def json_to_markdown(spec, output_file, login_path=None, logout_path=None):
                     example_response = {}
                     for prop_name, prop_info in resp_props.items():
                         if isinstance(prop_info, dict):
-                            example_response[prop_name] = prop_info.get('example', '')
+                            prop_type = prop_info.get('type', 'string')
+                            prop_example = prop_info.get('example')
+                            if prop_example is not None:
+                                example_response[prop_name] = prop_example
+                            elif prop_type == 'object' and 'properties' in prop_info:
+                                example_response[prop_name] = build_example_from_props(prop_info.get('properties', {}))
+                            elif prop_type == 'array':
+                                example_response[prop_name] = []
+                            else:
+                                example_response[prop_name] = ''
 
                 if not example_response:
                     example_response = {'code': 0, 'msg': 'success', 'data': {}}
@@ -322,12 +424,12 @@ def main():
                 json.dump(spec, f, ensure_ascii=False, indent=2)
             print(f"JSON 规范已保存: {json_file}")
 
-            # 自动识别登录/登出路径
-            login_path, logout_path = find_auth_paths(spec)
+            # 自动识别登录路径
+            login_path, _ = find_auth_paths(spec)
 
             # 生成 Markdown
             md_file = os.path.join(project_root, 'docs', 'API文档', 'API文档.md')
-            json_to_markdown(spec, md_file, login_path, logout_path)
+            json_to_markdown(spec, md_file, login_path)
             print(f"Markdown 文档已保存: {md_file}")
 
             # 统计
