@@ -232,6 +232,7 @@ def api_page(records, page_no, page_size, total_count):
 | 导出接口 | `/export` | `GET /{前缀}/order/export` |
 | 模板下载 | `/template/download` | `GET /{前缀}/order/template/download` |
 | 下拉接口 | `/dict?type={类型}` | `GET /{前缀}/order/dict?type=status` |
+| 上传接口 | `/upload` | `POST /{前缀}/upload` |
 
 ### 3.3 下拉接口响应格式（强制）
 
@@ -573,7 +574,31 @@ responses:
 
 **响应**：`{"code": 0, "msg": "修改成功"}`
 
-### 8.6 下拉接口与数据流（强制）
+### 8.6 上传接口规范（强制）
+
+**路径**：`POST /{前缀}/upload`
+
+| 参数 | 位置 | 类型 | 必填 | 说明 |
+|:-----|:-----|:-----|:-----|:-----|
+| file | formData | file | 是 | 上传文件（支持图片、文档等） |
+
+**响应**：
+
+| 字段 | 类型 | 说明 |
+|:-----|:-----|:-----|
+| code | int | 状态码 |
+| data | object | 数据对象 |
+| msg | string | 消息 |
+
+**data 响应参数**：
+
+| 字段 | 类型 | 说明 |
+|:-----|:-----|:-----|
+| url | string | 文件访问URL |
+
+**响应示例**：`{"code": 0, "data": {"url": "/uploads/xxx.png"}, "msg": "上传成功"}`
+
+### 8.7 下拉接口与数据流（强制）
 
 | 阶段 | 说明 |
 |:-----|:-----|
@@ -581,7 +606,7 @@ responses:
 | 用户选择 | 前端保存 `id` |
 | 创建/更新 | 前端传 `id` 给后端，后端只接收 id |
 
-### 8.7 导入导出字段对照（强制）
+### 8.8 导入导出字段对照（强制）
 
 > 详见 `docs/技术规范/导入导出规范.md` 第1章
 
